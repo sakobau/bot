@@ -61,44 +61,44 @@ def pubg_handler(message):
     # تنفيذ بعض الإجراءات الخاصة بزر "شدات ببجي"
     bot.send_message(message.chat.id, "سيتم تنفيذ الإجراءات المطلوبة لشدات ببجي هنا.")
 
+def deduct_balance(user, amount):
+    """
+    دالة لخصم الرصيد من المستخدم.
+    """
+    if user in user_balances and user_balances[user] >= amount:
+        user_balances[user] -= amount
+        return True
+    return False
+
 @bot.message_handler(func=lambda message: message.text == '5$')
 def five_dollars_handler(message):
-    # إنشاء لوحة مفاتيح مدمجة تحتوي على أزرار "نعم" و "لا"
-    markup = types.InlineKeyboardMarkup()
-    btn_yes = types.InlineKeyboardButton('نعم', callback_data='confirm_yes_5')
-    btn_no = types.InlineKeyboardButton('لا', callback_data='confirm_no')
-    
-    # إضافة الأزرار إلى اللوحة
-    markup.add(btn_yes, btn_no)
-    
-    # إرسال رسالة مع اللوحة الجديدة
-    bot.send_message(message.chat.id, "ستتم عملية الاستقطاع من الرصيد بمقدار 6000. هل أنت موافق؟", reply_markup=markup)
+    user = message.from_user.username
+    if deduct_balance(user, 6000):
+        bot.send_message(message.chat.id, "تم خصم 6000 من رصيدك.")
+    else:
+        bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
+    markup = get_user_balance_markup(user)
+    bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == '10$')
 def ten_dollars_handler(message):
-    # إنشاء لوحة مفاتيح مدمجة تحتوي على أزرار "نعم" و "لا"
-    markup = types.InlineKeyboardMarkup()
-    btn_yes = types.InlineKeyboardButton('نعم', callback_data='confirm_yes_10')
-    btn_no = types.InlineKeyboardButton('لا', callback_data='confirm_no')
-    
-    # إضافة الأزرار إلى اللوحة
-    markup.add(btn_yes, btn_no)
-    
-    # إرسال رسالة مع اللوحة الجديدة
-    bot.send_message(message.chat.id, "ستتم عملية الاستقطاع من الرصيد بمقدار 12000. هل أنت موافق؟", reply_markup=markup)
+    user = message.from_user.username
+    if deduct_balance(user, 12000):
+        bot.send_message(message.chat.id, "تم خصم 12000 من رصيدك.")
+    else:
+        bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
+    markup = get_user_balance_markup(user)
+    bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == '20$')
 def twenty_dollars_handler(message):
-    # إنشاء لوحة مفاتيح مدمجة تحتوي على أزرار "نعم" و "لا"
-    markup = types.InlineKeyboardMarkup()
-    btn_yes = types.InlineKeyboardButton('نعم', callback_data='confirm_yes_20')
-    btn_no = types.InlineKeyboardButton('لا', callback_data='confirm_no')
-    
-    # إضافة الأزرار إلى اللوحة
-    markup.add(btn_yes, btn_no)
-    
-    # إرسال رسالة مع اللوحة الجديدة
-    bot.send_message(message.chat.id, "ستتم عملية الاستقطاع من الرصيد بمقدار 24000. هل أنت موافق؟", reply_markup=markup)
+    user = message.from_user.username
+    if deduct_balance(user, 24000):
+        bot.send_message(message.chat.id, "تم خصم 24000 من رصيدك.")
+    else:
+        bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
+    markup = get_user_balance_markup(user)
+    bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == 'شحن الرصيد')
 def add_balance_handler(message):
@@ -133,30 +133,6 @@ def process_add_balance(message):
     else:
         bot.send_message(message.chat.id, "غير مصرح لك باستخدام هذه الخاصية.")
 
-@bot.callback_query_handler(func=lambda call: call.data == 'confirm_yes_5')
-def confirm_yes_5(call):
-    bot.answer_callback_query(call.id, text="سيتم إرسال معلوماتك إلى المجهز وسيتم تجهيزك بالرصيد بأقرب وقت ممكن.")
-    # إرسال رسالة تأكيدية
-    bot.send_message(call.message.chat.id, "شكراً لك! سيتم معالجة طلبك بأسرع وقت.")
-    # العودة إلى القائمة الرئيسية بعد معالجة الطلب
-    send_welcome(call.message)
-
-@bot.callback_query_handler(func=lambda call: call.data == 'confirm_yes_10')
-def confirm_yes_10(call):
-    bot.answer_callback_query(call.id, text="سيتم إرسال معلوماتك إلى المجهز وسيتم تجهيزك بالرصيد بأقرب وقت ممكن.")
-    # إرسال رسالة تأكيدية
-    bot.send_message(call.message.chat.id, "شكراً لك! سيتم معالجة طلبك بأسرع وقت.")
-    # العودة إلى القائمة الرئيسية بعد معالجة الطلب
-    send_welcome(call.message)
-
-@bot.callback_query_handler(func=lambda call: call.data == 'confirm_yes_20')
-def confirm_yes_20(call):
-    bot.answer_callback_query(call.id, text="سيتم إرسال معلوماتك إلى المجهز وسيتم تجهيزك بالرصيد بأقرب وقت ممكن.")
-    # إرسال رسالة تأكيدية
-    bot.send_message(call.message.chat.id, "شكراً لك! سيتم معالجة طلبك بأسرع وقت.")
-    # العودة إلى القائمة الرئيسية بعد معالجة الطلب
-    send_welcome(call.message)
-
 @bot.callback_query_handler(func=lambda call: call.data == 'confirm_no')
 def confirm_no(call):
     # إنشاء لوحة مفاتيح جديدة تحتوي على زر "رجوع"
@@ -174,4 +150,3 @@ def back_handler(message):
 
 # بدء تشغيل البوت
 bot.polling()
-    
