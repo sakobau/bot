@@ -9,19 +9,33 @@ bot = telebot.TeleBot(TOKEN)
 # متغير لتخزين الرصيد
 balance = 0
 
+# معرف المطور
+developer_id = '@m_55mg'
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     # إنشاء لوحة المفاتيح المخصصة
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     
-    # إنشاء زر "كارتات اسيا"
+    # إنشاء زر "الرصيد" وزر "كارتات اسيا"
+    btn_balance = types.KeyboardButton('الرصيد')
     btn_asia = types.KeyboardButton('كارتات اسيا')
+    btn_pubg = types.KeyboardButton('شدات ببجي')  # زر جديد "شدات ببجي"
     
-    # إضافة الزر إلى اللوحة
+    # إضافة الأزرار إلى اللوحة
+    markup.add(btn_balance)
     markup.add(btn_asia)
+    markup.add(btn_pubg)
     
     # إرسال رسالة مع اللوحة
     bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == 'الرصيد')
+def balance_handler(message):
+    if message.from_user.username == developer_id:
+        bot.send_message(message.chat.id, f"الرصيد الحالي: {balance}")
+    else:
+        bot.send_message(message.chat.id, "غير مصرح لك بالاطلاع على الرصيد.")
 
 @bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
 def asia_cards_handler(message):
@@ -41,6 +55,11 @@ def asia_cards_handler(message):
     
     # إرسال رسالة مع اللوحة الجديدة
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
+def pubg_handler(message):
+    # تنفيذ بعض الإجراءات الخاصة بزر "شدات ببجي"
+    bot.send_message(message.chat.id, "سيتم تنفيذ الإجراءات المطلوبة لشدات ببجي هنا.")
 
 @bot.message_handler(func=lambda message: message.text == '5$')
 def five_dollars_handler(message):
