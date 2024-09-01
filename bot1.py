@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
-TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM
+TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -174,3 +174,4 @@ def back_handler(message):
 
 # بدء تشغيل البوت
 bot.polling()
+    
