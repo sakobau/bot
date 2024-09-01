@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
-TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
+TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -12,29 +12,29 @@ user_balances = {}
 # معرف المطور
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
 
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    # إنشاء لوحة المفاتيح المخصصة
+def get_user_balance_markup(user):
+    """
+    دالة لإنشاء لوحة المفاتيح مع زر الرصيد المحدث بناءً على رصيد المستخدم.
+    """
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-
-    # زر "الرصيد" كزر غير تفاعلي (كمثال الرقم 0، يمكن تحديثه لاحقاً)
-    btn_balance = types.KeyboardButton('الرصيد: 0')
-
-    # إنشاء زر "كارتات اسيا" وزر "شدات ببجي"
+    balance = user_balances.get(user, 0)
+    btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
     btn_asia = types.KeyboardButton('كارتات اسيا')
     btn_pubg = types.KeyboardButton('شدات ببجي')
 
-    # التحقق من إذا كان المستخدم هو المطور لإضافة زر "شحن الرصيد"
-    if message.from_user.username == developer_username:
+    markup.add(btn_balance)
+    markup.add(btn_asia, btn_pubg)
+    
+    if user == developer_username:
         btn_add_balance = types.KeyboardButton('شحن الرصيد')  # زر للمطور لشحن الرصيد
         markup.add(btn_add_balance)
+    
+    return markup
 
-    # إضافة الأزرار إلى اللوحة
-    markup.add(btn_balance)
-    markup.add(btn_asia)
-    markup.add(btn_pubg)
-
-    # إرسال رسالة مع اللوحة
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    # إرسال رسالة مع اللوحة المخصصة
+    markup = get_user_balance_markup(message.from_user.username)
     bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
@@ -116,12 +116,18 @@ def process_add_balance(message):
             amount = int(amount)
             
             # تحديث الرصيد للمستخدم المحدد
+            user = user.lstrip('@')  # إزالة العلامة @ من المعرف إذا كانت موجودة
             if user not in user_balances:
                 user_balances[user] = 0
             user_balances[user] += amount
             
-            # تحديث زر الرصيد
+            # إرسال رسالة التأكيد
             bot.send_message(message.chat.id, f"تم شحن {amount} لرصيد {user}. الرصيد الحالي هو: {user_balances[user]}")
+            
+            # تحديث لوحة المفاتيح للمستخدم المستهدف (إذا كان في نفس المحادثة)
+            if message.chat.username == user:
+                markup = get_user_balance_markup(user)
+                bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
         except Exception as e:
             bot.send_message(message.chat.id, "حدث خطأ، يرجى التأكد من الصيغة وإعادة المحاولة.")
     else:
