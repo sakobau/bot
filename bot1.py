@@ -42,9 +42,9 @@ def asia_cards_handler(message):
     # إنشاء لوحة مفاتيح جديدة تحتوي على زر "5$" وزر "10$" وزر "20$" وزر "رجوع"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     
-    btn_5dollars = types.KeyboardButton('5$')
-    btn_10dollars = types.KeyboardButton('10$')  # زر 10$
-    btn_20dollars = types.KeyboardButton('20$')  # زر جديد 20$
+    btn_5dollars = types.KeyboardButton('5')
+    btn_10dollars = types.KeyboardButton('10')  # زر 10$
+    btn_20dollars = types.KeyboardButton('20')  # زر جديد 20$
     btn_back = types.KeyboardButton('رجوع')
     
     # إضافة الأزرار إلى اللوحة
