@@ -19,8 +19,8 @@ def get_user_balance_markup(user):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     balance = user_balances.get(user, 0)
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
-    btn_asia = types.KeyboardButton(' 🖥 كارتات اسيا')
-    btn_pubg = types.KeyboardButton('♦ شدات ببجي')
+    btn_asia = types.KeyboardButton(' 🖥كارتات اسيا')
+    btn_pubg = types.KeyboardButton('♦شدات ببجي')
 
     markup.add(btn_balance)
     markup.add(btn_asia, btn_pubg)
@@ -37,7 +37,7 @@ def send_welcome(message):
     markup = get_user_balance_markup(message.from_user.username)
     bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
+@bot.message_handler(func=lambda message: message.text == '🖥كارتات اسيا')
 def asia_cards_handler(message):
     # إنشاء لوحة مفاتيح جديدة تحتوي على زر "5$" وزر "10$" وزر "20$" وزر "رجوع"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -56,7 +56,7 @@ def asia_cards_handler(message):
     # إرسال رسالة مع اللوحة الجديدة
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
+@bot.message_handler(func=lambda message: message.text == '♦شدات ببجي')
 def pubg_handler(message):
     # إنشاء لوحة مفاتيح جديدة تحتوي على زر "360UC" وزر "رجوع"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
