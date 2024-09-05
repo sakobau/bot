@@ -26,7 +26,7 @@ def get_user_balance_markup(user):
     markup.add(btn_asia, btn_pubg)
     
     if user == developer_username:
-        btn_add_balance = types.KeyboardButton('🔸شحن الرصيد')  # زر للمطور لشحن الرصيد
+        btn_add_balance = types.KeyboardButton('شحن الرصيد')  # زر للمطور لشحن الرصيد
         markup.add(btn_add_balance)
     
     return markup
