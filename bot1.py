@@ -19,14 +19,14 @@ def get_user_balance_markup(user):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     balance = user_balances.get(user, 0)
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
-    btn_asia = types.KeyboardButton('كارتات اسيا')
-    btn_pubg = types.KeyboardButton('شدات ببجي')
+    btn_asia = types.KeyboardButton(' 🖥 كارتات اسيا')
+    btn_pubg = types.KeyboardButton('♦ شدات ببجي')
 
     markup.add(btn_balance)
     markup.add(btn_asia, btn_pubg)
     
     if user == developer_username:
-        btn_add_balance = types.KeyboardButton('شحن الرصيد')  # زر للمطور لشحن الرصيد
+        btn_add_balance = types.KeyboardButton('🔸شحن الرصيد')  # زر للمطور لشحن الرصيد
         markup.add(btn_add_balance)
     
     return markup
@@ -58,8 +58,30 @@ def asia_cards_handler(message):
 
 @bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
 def pubg_handler(message):
-    # تنفيذ بعض الإجراءات الخاصة بزر "شدات ببجي"
-    bot.send_message(message.chat.id, "سيتم تنفيذ الإجراءات المطلوبة لشدات ببجي هنا.")
+    # إنشاء لوحة مفاتيح جديدة تحتوي على زر "360UC" وزر "رجوع"
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    
+    btn_360uc = types.KeyboardButton('360UC')  # زر جديد 360UC
+    btn_back = types.KeyboardButton('رجوع')
+    
+    # إضافة الأزرار إلى اللوحة
+    markup.add(btn_360uc)
+    markup.add(btn_back)
+    
+    # إرسال رسالة مع اللوحة الجديدة
+    bot.send_message(message.chat.id, "اختر عدد الشدات:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == '360UC')
+def uc_360_handler(message):
+    user = message.from_user.username
+    if deduct_balance(user, 7000):
+        bot.send_message(message.chat.id, "تم خصم 7000 من رصيدك مقابل 360UC.")
+    else:
+        bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
+    
+    # تحديث لوحة الرصيد
+    markup = get_user_balance_markup(user)
+    bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
 
 def deduct_balance(user, amount):
     """
