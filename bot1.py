@@ -11,6 +11,7 @@ user_balances = {}
 
 # معرف المطور
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
+OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور
 
 def get_user_balance_markup(user):
     """
@@ -92,7 +93,7 @@ def uc_660_handler(message):
         bot.send_message(message.chat.id, "تم خصم 15000 من رصيدك مقابل 660UC.")
         # إرسال الطلب إلى المطور في الرسائل المحفوظة
         order_details = f"طلب جديد:\nالاسم: {message.from_user.first_name}\nالمعرف: @{user}\nالطلب: 660UC"
-        bot.send_message(bot.get_chat("@m_55mg").id, order_details)
+        bot.send_message(OWNER_USER_ID, order_details)
     else:
         bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
     
