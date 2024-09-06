@@ -14,6 +14,9 @@ user_balances = {}
 # معرف المطور
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
 
+# متغير لتخزين حالة المطور (تخزين اليوزر الذي يود شحن رصيده)
+pending_user = None
+
 def is_user_subscribed(user_id):
     """
     دالة للتحقق من اشتراك المستخدم في القناة.
@@ -174,5 +177,21 @@ def deduct_balance(user, amount):
         return True
     return False
 
-# بدء تشغيل البوت
-bot.polling()
+@bot.message_handler(func=lambda message: message.text == 'شحن الرصيد')
+def recharge_balance(message):
+    if message.from_user.username != developer_username:
+        bot.send_message(message.chat.id, "هذه الميزة مخصصة للمطور فقط.")
+        return
+    
+    bot.send_message(message.chat.id, "أرسل الآن اسم المستخدم الذي تريد شحن رصيده.")
+    global pending_user
+    pending_user = 'waiting_for_user'
+
+@bot.message_handler(func=lambda message: pending_user == 'waiting_for_user')
+def handle_pending_user(message):
+    global pending_user
+    pending_user = None
+    
+    user_to_recharge = message.text
+    if user_to_recharge not in user_balances:
+        bot.send_message(message.chat
