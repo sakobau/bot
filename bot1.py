@@ -14,9 +14,6 @@ user_balances = {}
 # معرف المطور
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
 
-# متغير لتخزين حالة المطور (تخزين اليوزر الذي يود شحن رصيده)
-pending_user = None
-
 def is_user_subscribed(user_id):
     """
     دالة للتحقق من اشتراك المستخدم في القناة.
@@ -60,138 +57,52 @@ def send_welcome(message):
         markup = get_user_balance_markup(message.from_user.username)
         bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
-def asia_cards_handler(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-        return
-    
-    # إنشاء لوحة مفاتيح جديدة تحتوي على زر "5$" وزر "10$" وزر "20$" وزر "رجوع"
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    
-    btn_5dollars = types.KeyboardButton('5$')
-    btn_10dollars = types.KeyboardButton('10$')  # زر 10$
-    btn_20dollars = types.KeyboardButton('20$')  # زر جديد 20$
-    btn_back = types.KeyboardButton('رجوع')
-    
-    # إضافة الأزرار إلى اللوحة
-    markup.add(btn_5dollars)
-    markup.add(btn_10dollars)  # إضافة الزر 10$
-    markup.add(btn_20dollars)  # إضافة الزر الجديد 20$
-    markup.add(btn_back)
-    
-    # إرسال رسالة مع اللوحة الجديدة
-    bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
-
-@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
-def pubg_handler(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-        return
-    
-    # إنشاء لوحة مفاتيح جديدة تحتوي على زر "360UC" وزر "660UC" وزر "رجوع"
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    
-    btn_360uc = types.KeyboardButton('360UC')  # زر 360UC
-    btn_660uc = types.KeyboardButton('660UC')  # زر جديد 660UC
-    btn_back = types.KeyboardButton('رجوع')
-    
-    # إضافة الأزرار إلى اللوحة
-    markup.add(btn_360uc)
-    markup.add(btn_660uc)  # إضافة الزر 660UC
-    markup.add(btn_back)
-    
-    # إرسال رسالة مع اللوحة الجديدة
-    bot.send_message(message.chat.id, "اختر عدد الشدات:", reply_markup=markup)
-
-# دالة التأكيد
-def ask_confirmation(message, amount):
-    """
-    عرض رسالة تأكيد للمستخدم لخصم مبلغ معين من رصيده.
-    """
-    markup = types.InlineKeyboardMarkup()
-    btn_yes = types.InlineKeyboardButton("نعم", callback_data=f"confirm_yes_{amount}")
-    btn_no = types.InlineKeyboardButton("لا", callback_data="confirm_no")
-    markup.add(btn_yes, btn_no)
-    
-    bot.send_message(message.chat.id, f"هل تريد استقطاع مبلغ {amount} من رصيدك؟", reply_markup=markup)
-
-# دوال لكل زر من الأزرار
-@bot.message_handler(func=lambda message: message.text == '5$')
-def five_dollars_handler(message):
-    ask_confirmation(message, 7000)
-
-@bot.message_handler(func=lambda message: message.text == '10$')
-def ten_dollars_handler(message):
-    ask_confirmation(message, 12000)
-
-@bot.message_handler(func=lambda message: message.text == '20$')
-def twenty_dollars_handler(message):
-    ask_confirmation(message, 24000)
-
-@bot.message_handler(func=lambda message: message.text == '360UC')
-def uc_360_handler(message):
-    ask_confirmation(message, 8000)
-
-@bot.message_handler(func=lambda message: message.text == '660UC')
-def uc_660_handler(message):
-    ask_confirmation(message, 16000)
-
-# ردود أزرار التأكيد
-@bot.callback_query_handler(func=lambda call: call.data.startswith('confirm_yes_'))
-def confirm_yes(call):
-    # استخراج المبلغ من الـ callback data
-    amount = int(call.data.split('_')[-1])
-    user = call.from_user.username
-    
-    # خصم الرصيد
-    if deduct_balance(user, amount):
-        bot.answer_callback_query(call.id, f"تم خصم {amount} من رصيدك.")
-        bot.send_message(call.message.chat.id, f"تم استقطاع {amount} من رصيدك.")
-    else:
-        bot.answer_callback_query(call.id, "رصيدك غير كافٍ.")
-        bot.send_message(call.message.chat.id, "رصيدك غير كافٍ.")
-    
-    # تحديث لوحة المفاتيح
-    markup = get_user_balance_markup(user)
-    bot.send_message(call.message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
-
-@bot.callback_query_handler(func=lambda call: call.data == 'confirm_no')
-def confirm_no(call):
-    # إلغاء العملية
-    bot.answer_callback_query(call.id, "تم إلغاء العملية.")
-    bot.send_message(call.message.chat.id, "تم إلغاء العملية.")
-
-def deduct_balance(user, amount):
-    """
-    دالة لخصم الرصيد من المستخدم.
-    """
-    if user in user_balances and user_balances[user] >= amount:
-        user_balances[user] -= amount
-        return True
-    return False
-
 @bot.message_handler(func=lambda message: message.text == 'شحن الرصيد')
-def recharge_balance(message):
+def add_balance_handler(message):
     if message.from_user.username != developer_username:
-        bot.send_message(message.chat.id, "هذه الميزة مخصصة للمطور فقط.")
+        bot.send_message(message.chat.id, "هذا الزر مخصص للمطور فقط.")
         return
     
     bot.send_message(message.chat.id, "أرسل الآن اسم المستخدم الذي تريد شحن رصيده.")
-    global pending_user
-    pending_user = 'waiting_for_user'
+    bot.register_next_step_handler(message, process_user_for_balance)
 
-@bot.message_handler(func=lambda message: pending_user == 'waiting_for_user')
-def handle_pending_user(message):
-    global pending_user
-    pending_user = None
+def process_user_for_balance(message):
+    global target_user
     
-    user_to_recharge = message.text
-    if user_to_recharge not in user_balances:
-        bot.send_message(message.chat
+    target_user = message.text.strip()  # تخزين اسم المستخدم للمستخدم الذي سيتم شحن رصيده
+    
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    amounts = ['10000', '20000', '30000', '40000', '50000', '60000', '70000', '80000', '90000', '100000']
+    
+    for amount in amounts:
+        markup.add(types.KeyboardButton(f'{amount}'))
+    btn_back = types.KeyboardButton('رجوع')
+    markup.add(btn_back)
+    
+    bot.send_message(message.chat.id, "اختر المبلغ الذي تريد شحنه:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text.isdigit() and int(message.text) in range(10000, 100001))
+def handle_amount_selection(message):
+    global target_user
+    
+    amount = int(message.text)
+    
+    if target_user in user_balances:
+        user_balances[target_user] += amount
+    else:
+        user_balances[target_user] = amount
+    
+    bot.send_message(message.chat.id, f"تم شحن {amount} إلى رصيد {target_user}.")
+    
+    # تحديث لوحة المفاتيح للمطور
+    markup = get_user_balance_markup(developer_username)
+    bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == 'رجوع')
+def handle_back(message):
+    markup = get_user_balance_markup(developer_username)
+    bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
+
+# ... باقي الشيفرة كما هي
+
+bot.polling()
