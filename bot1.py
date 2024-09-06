@@ -11,7 +11,7 @@ user_balances = {}
 
 # معرف المطور
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
-OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور
+OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور (الرسائل المحفوظة)
 
 def get_user_balance_markup(user):
     """
