@@ -19,8 +19,8 @@ def get_user_balance_markup(user):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     balance = user_balances.get(user, 0)
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
-    btn_asia = types.KeyboardButton(' 🖥كارتات اسيا')
-    btn_pubg = types.KeyboardButton('♦شدات ببجي')
+    btn_asia = types.KeyboardButton('كارتات اسيا')
+    btn_pubg = types.KeyboardButton('شدات ببجي')
 
     markup.add(btn_balance)
     markup.add(btn_asia, btn_pubg)
@@ -37,7 +37,7 @@ def send_welcome(message):
     markup = get_user_balance_markup(message.from_user.username)
     bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == '🖥كارتات اسيا')
+@bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
 def asia_cards_handler(message):
     # إنشاء لوحة مفاتيح جديدة تحتوي على زر "5$" وزر "10$" وزر "20$" وزر "رجوع"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -56,16 +56,18 @@ def asia_cards_handler(message):
     # إرسال رسالة مع اللوحة الجديدة
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == '♦شدات ببجي')
+@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
 def pubg_handler(message):
-    # إنشاء لوحة مفاتيح جديدة تحتوي على زر "360UC" وزر "رجوع"
+    # إنشاء لوحة مفاتيح جديدة تحتوي على زر "360UC" وزر "660UC" وزر "رجوع"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     
-    btn_360uc = types.KeyboardButton('360UC')  # زر جديد 360UC
+    btn_360uc = types.KeyboardButton('360UC')  # زر 360UC
+    btn_660uc = types.KeyboardButton('660UC')  # زر جديد 660UC
     btn_back = types.KeyboardButton('رجوع')
     
     # إضافة الأزرار إلى اللوحة
     markup.add(btn_360uc)
+    markup.add(btn_660uc)  # إضافة الزر 660UC
     markup.add(btn_back)
     
     # إرسال رسالة مع اللوحة الجديدة
@@ -76,6 +78,21 @@ def uc_360_handler(message):
     user = message.from_user.username
     if deduct_balance(user, 7000):
         bot.send_message(message.chat.id, "تم خصم 7000 من رصيدك مقابل 360UC.")
+    else:
+        bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
+    
+    # تحديث لوحة الرصيد
+    markup = get_user_balance_markup(user)
+    bot.send_message(message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == '660UC')
+def uc_660_handler(message):
+    user = message.from_user.username
+    if deduct_balance(user, 15000):
+        bot.send_message(message.chat.id, "تم خصم 15000 من رصيدك مقابل 660UC.")
+        # إرسال الطلب إلى المطور في الرسائل المحفوظة
+        order_details = f"طلب جديد:\nالاسم: {message.from_user.first_name}\nالمعرف: @{user}\nالطلب: 660UC"
+        bot.send_message(bot.get_chat("@m_55mg").id, order_details)
     else:
         bot.send_message(message.chat.id, "رصيدك غير كافٍ.")
     
