@@ -3,7 +3,7 @@ from telebot import types
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
 TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
-CHANNEL_USERNAME = '@arbi1001'  # اسم القناة مع علامة @
+CHANNEL_USERNAME = '@rbi1001'  # اسم القناة مع علامة @
 OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور (الرسائل المحفوظة)
 
 bot = telebot.TeleBot(TOKEN)
@@ -77,7 +77,47 @@ def asia_cards_handler(message):
     
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
 
-# معالجة خصم الرصيد عند اختيار كارتات
+# التعامل مع شدات ببجي
+@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
+def pubg_uc_handler(message):
+    if not is_user_subscribed(message.from_user.id):
+        markup = types.InlineKeyboardMarkup()
+        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
+        markup.add(btn_subscribe)
+        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
+        return
+    
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn_60uc = types.KeyboardButton('60UC')
+    btn_360uc = types.KeyboardButton('360UC')
+    btn_660uc = types.KeyboardButton('660UC')
+    btn_720uc = types.KeyboardButton('720UC')
+    btn_1950uc = types.KeyboardButton('1950UC')
+    btn_back = types.KeyboardButton('رجوع')
+
+    markup.add(btn_60uc, btn_360uc)
+    markup.add(btn_660uc, btn_720uc)
+    markup.add(btn_1950uc)
+    markup.add(btn_back)
+
+    bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
+
+# معالجة خصم الرصيد عند اختيار شدات ببجي
+@bot.message_handler(func=lambda message: message.text in ['60UC', '360UC', '660UC', '720UC', '1950UC'])
+def handle_pubg_uc_selection(message):
+    price_map = {
+        '60UC': 3000,
+        '360UC': 8000,
+        '660UC': 14000,
+        '720UC': 16000,
+        '1950UC': 35000
+    }
+    
+    amount = price_map.get(message.text)
+    if amount:
+        ask_confirmation(message, amount)
+
+# معالجة خصم الرصيد عند اختيار كارتات آسيا
 @bot.message_handler(func=lambda message: message.text in ['5$', '10$', '15$', '20$', '25$'])
 def handle_asia_card_selection(message):
     price_map = {
