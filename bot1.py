@@ -1,10 +1,11 @@
 import telebot
 from telebot import types
+from datetime import datetime
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
 TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
 CHANNEL_USERNAME = '@arbi1001'  # اسم القناة مع علامة @
-OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور
+OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور (الرسائل المحفوظة)
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -156,6 +157,21 @@ def confirm_yes(call):
     if deduct_balance(user, amount):
         bot.answer_callback_query(call.id, f"تم خصم {amount} من رصيدك.")
         bot.send_message(call.message.chat.id, f"تم استقطاع {amount} من رصيدك.")
+        
+        # نشر رسالة في القناة عند شحن الرصيد
+        now = datetime.now()
+        current_date = now.strftime("%Y-%m-%d")
+        bot.send_message(
+            CHANNEL_USERNAME,
+            f"تم تسليم طلب جديد ☑️\n"
+            f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
+            f"🏷 ¦ السلعة : شحن رصيد\n"
+            f"💰 ¦ السعر : {amount}\n"
+            f"📆 ¦ التاريخ : {current_date}\n\n"
+            f"معلومات المُشتري 🪪\n"
+            f"🏷 ¦ اليوزر @{user}\n"
+            f"🆔 ¦ الأيدي {call.from_user.id}\n"
+        )
     else:
         bot.answer_callback_query(call.id, "رصيدك غير كافٍ.")
         bot.send_message(call.message.chat.id, "رصيدك غير كافٍ.")
@@ -179,8 +195,7 @@ def deduct_balance(user, amount):
 @bot.message_handler(func=lambda message: message.text == 'شحن الرصيد' and message.from_user.username == developer_username)
 def ask_user_for_recharge(message):
     bot.send_message(message.chat.id, "الرجاء إرسال اسم المستخدم لشحن الرصيد.")
-
-# استقبال اسم المستخدم لشحن الرصيد
+    # استقبال اسم المستخدم لشحن الرصيد
 @bot.message_handler(func=lambda message: message.from_user.username == developer_username and message.text.startswith('@'))
 def ask_amount_for_recharge(message):
     username = message.text.lstrip('@')
@@ -192,7 +207,7 @@ def ask_amount_for_recharge(message):
     bot.send_message(message.chat.id, f"اختر المبلغ لشحن {username}:", reply_markup=markup)
     bot.register_next_step_handler(message, recharge_user, username)
 
-# شحن المستخدم بالمبلغ المختار مع نشر رسالة في القناة
+# شحن المستخدم بالمبلغ المختار
 def recharge_user(message, username):
     try:
         amount = int(message.text)
@@ -200,14 +215,22 @@ def recharge_user(message, username):
             user_balances[username] += amount
         else:
             user_balances[username] = amount
-        
+        bot.send_message(message.chat.id, f"تم شحن {amount} إلى {username}.")
+
         # نشر رسالة في القناة عند شحن الرصيد
+        now = datetime.now()
+        current_date = now.strftime("%Y-%m-%d")
         bot.send_message(
             CHANNEL_USERNAME,
-            f"تم شحن {amount} إلى المستخدم @{username} بواسطة بوت سوبر تكنو."
+            f"تم تسليم طلب جديد ☑️\n"
+            f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
+            f"🏷 ¦ السلعة : شحن رصيد\n"
+            f"💰 ¦ السعر : {amount}\n"
+            f"📆 ¦ التاريخ : {current_date}\n\n"
+            f"معلومات المُشتري 🪪\n"
+            f"🏷 ¦ اليوزر @{username}\n"
+            f"🆔 ¦ الأيدي {message.from_user.id}\n"
         )
-
-        bot.send_message(message.chat.id, f"تم شحن {amount} إلى {username}.")
     except ValueError:
         bot.send_message(message.chat.id, "الرجاء اختيار مبلغ صالح.")
 
