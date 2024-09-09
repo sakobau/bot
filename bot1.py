@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
-TOKEN = '7242581979:AAGq_4IqGxPHsVdtp2ikeoYLwm0wwZawzz0'
+TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
 CHANNEL_USERNAME = '@arbi1001'  # اسم القناة مع علامة @
 OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور
 
