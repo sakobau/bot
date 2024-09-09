@@ -1,6 +1,5 @@
 import telebot
 from telebot import types
-from datetime import datetime
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
 TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
@@ -27,10 +26,6 @@ def is_user_subscribed(user_id):
 # دالة لإنشاء لوحة مفاتيح المستخدم
 def get_user_balance_markup(user):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    # تعيين رصيد افتراضي إذا كان المستخدم غير موجود
-    if user not in user_balances:
-        user_balances[user] = 0
-
     balance = user_balances.get(user, 0)
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
     btn_asia = types.KeyboardButton('كارتات اسيا')
@@ -143,6 +138,36 @@ def handle_back(message):
     markup = get_user_balance_markup(message.from_user.username)
     bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
 
+# تأكيد خصم الرصيد
+def ask_confirmation(message, amount):
+    markup = types.InlineKeyboardMarkup()
+    btn_yes = types.InlineKeyboardButton("نعم", callback_data=f"confirm_yes_{amount}")
+    btn_no = types.InlineKeyboardButton("لا", callback_data="confirm_no")
+    markup.add(btn_yes, btn_no)
+    
+    bot.send_message(message.chat.id, f"هل تريد استقطاع مبلغ {amount} من رصيدك؟", reply_markup=markup)
+
+# تأكيد نعم لخصم الرصيد
+@bot.callback_query_handler(func=lambda call: call.data.startswith('confirm_yes_'))
+def confirm_yes(call):
+    amount = int(call.data.split('_')[-1])
+    user = call.from_user.username
+
+    if deduct_balance(user, amount):
+        bot.answer_callback_query(call.id, f"تم خصم {amount} من رصيدك.")
+        bot.send_message(call.message.chat.id, f"تم استقطاع {amount} من رصيدك.")
+    else:
+        bot.answer_callback_query(call.id, "رصيدك غير كافٍ.")
+        bot.send_message(call.message.chat.id, "رصيدك غير كافٍ.")
+    
+    markup = get_user_balance_markup(user)
+    bot.send_message(call.message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: call.data == 'confirm_no')
+def confirm_no(call):
+    bot.answer_callback_query(call.id, "تم إلغاء العملية.")
+    bot.send_message(call.message.chat.id, "تم إلغاء العملية.")
+
 # دالة خصم الرصيد
 def deduct_balance(user, amount):
     if user in user_balances and user_balances[user] >= amount:
@@ -154,12 +179,17 @@ def deduct_balance(user, amount):
 @bot.message_handler(func=lambda message: message.text == 'شحن الرصيد' and message.from_user.username == developer_username)
 def ask_user_for_recharge(message):
     bot.send_message(message.chat.id, "الرجاء إرسال اسم المستخدم لشحن الرصيد.")
-    bot.register_next_step_handler(message, ask_amount_for_recharge)
 
-# استقبال اسم المستخدم والمبلغ لشحن الرصيد
+# استقبال اسم المستخدم لشحن الرصيد
+@bot.message_handler(func=lambda message: message.from_user.username == developer_username and message.text.startswith('@'))
 def ask_amount_for_recharge(message):
     username = message.text.lstrip('@')
-    bot.send_message(message.chat.id, f"الرجاء إرسال المبلغ الذي تريد شحنه ل {username}.")
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    
+    for amount in range(10000, 100001, 10000):
+        markup.add(types.KeyboardButton(f'{amount}'))
+    
+    bot.send_message(message.chat.id, f"اختر المبلغ لشحن {username}:", reply_markup=markup)
     bot.register_next_step_handler(message, recharge_user, username)
 
 # شحن المستخدم بالمبلغ المختار
@@ -171,23 +201,8 @@ def recharge_user(message, username):
         else:
             user_balances[username] = amount
         bot.send_message(message.chat.id, f"تم شحن {amount} إلى {username}.")
-
-        # نشر رسالة في القناة عند شحن الرصيد
-        now = datetime.now()
-        current_date = now.strftime("%Y-%m-%d")
-        bot.send_message(
-            CHANNEL_USERNAME,
-            f"تم تسليم طلب جديد ☑️\n"
-            f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
-            f"🏷 ¦ السلعة : شحن رصيد\n"
-            f"💰 ¦ السعر : {amount}\n"
-            f"📆 ¦ التاريخ : {current_date}\n\n"
-            f"معلومات المُشتري 🪪\n"
-            f"🏷 ¦ اليوزر @{username}\n"
-            f"🆔 ¦ الأيدي {message.from_user.id}\n"
-        )
     except ValueError:
-        bot.send_message(message.chat.id, "الرجاء إدخال مبلغ صالح.")
+        bot.send_message(message.chat.id, "الرجاء اختيار مبلغ صالح.")
 
 # بدء تشغيل البوت
 bot.polling()
