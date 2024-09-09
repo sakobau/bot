@@ -76,7 +76,70 @@ def asia_cards_handler(message):
     markup.add(btn_back)
     
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
+# متغير لتخزين الأزرار المضافة
+custom_buttons = {}
 
+# دالة لإضافة زر جديد فقط للمطور
+@bot.message_handler(func=lambda message: message.text == 'إضافة الأزرار' and message.from_user.username == developer_username)
+def ask_button_name(message):
+    bot.send_message(message.chat.id, "الرجاء إدخال اسم الزر الجديد:")
+    bot.register_next_step_handler(message, add_custom_button)
+
+def add_custom_button(message):
+    button_name = message.text
+    custom_buttons[button_name] = {}
+    bot.send_message(message.chat.id, f"تم إضافة الزر: {button_name}. الآن يمكن للمطور إضافة أزرار داخل هذا الزر.")
+    update_keyboards()
+
+# دالة لإضافة أزرار داخل الزر الرئيسي مع سعر
+@bot.message_handler(func=lambda message: message.text in custom_buttons and message.from_user.username == developer_username)
+def ask_inner_button_name(message):
+    parent_button = message.text
+    bot.send_message(message.chat.id, f"أدخل اسم الزر الداخلي الذي ترغب بإضافته إلى {parent_button}:")
+    bot.register_next_step_handler(message, ask_inner_button_price, parent_button)
+
+def ask_inner_button_price(message, parent_button):
+    inner_button_name = message.text
+    bot.send_message(message.chat.id, f"أدخل سعر الزر {inner_button_name}:")
+    bot.register_next_step_handler(message, add_inner_button, parent_button, inner_button_name)
+
+def add_inner_button(message, parent_button, inner_button_name):
+    try:
+        price = int(message.text)
+        custom_buttons[parent_button][inner_button_name] = price
+        bot.send_message(message.chat.id, f"تم إضافة الزر {inner_button_name} بسعر {price} إلى {parent_button}.")
+        update_keyboards()
+    except ValueError:
+        bot.send_message(message.chat.id, "الرجاء إدخال رقم صحيح للسعر.")
+
+# دالة لتحديث لوحة المفاتيح لجميع المستخدمين والمطور
+def update_keyboards():
+    for user, balance in user_balances.items():
+        markup = get_user_balance_markup(user)
+        for custom_button in custom_buttons:
+            markup.add(types.KeyboardButton(custom_button))
+        bot.send_message(user, "تم تحديث القائمة:", reply_markup=markup)
+
+# معالجة اختيار الأزرار المخصصة
+@bot.message_handler(func=lambda message: message.text in custom_buttons)
+def handle_custom_button(message):
+    parent_button = message.text
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    
+    for inner_button, price in custom_buttons[parent_button].items():
+        markup.add(types.KeyboardButton(f"{inner_button} - {price}"))
+    markup.add(types.KeyboardButton('رجوع'))
+    
+    bot.send_message(message.chat.id, f"اختر زرًا من {parent_button}:", reply_markup=markup)
+
+# خصم الرصيد عند اختيار الأزرار الداخلية
+@bot.message_handler(func=lambda message: any(f"{btn} - " in message.text for btn in custom_buttons))
+def handle_inner_custom_button(message):
+    for parent_button, inner_buttons in custom_buttons.items():
+        for inner_button, price in inner_buttons.items():
+            if f"{inner_button} - {price}" == message.text:
+                ask_confirmation(message, price)
+                return 
 # التعامل مع شدات ببجي
 @bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
 def pubg_uc_handler(message):
