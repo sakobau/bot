@@ -2,9 +2,9 @@ import telebot
 from telebot import types
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
-TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
+TOKEN = '7242581979:AAGq_4IqGxPHsVdtp2ikeoYLwm0wwZawzz0'
 CHANNEL_USERNAME = '@arbi1001'  # اسم القناة مع علامة @
-OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور (الرسائل المحفوظة)
+OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -12,8 +12,11 @@ bot = telebot.TeleBot(TOKEN)
 user_balances = {}
 
 # معرف المطور
-developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
-developer_id = 6649576561  # معرف المستخدم الخاص بالمطور
+developer_username = 'your_developer_username'  # بدون علامة @
+developer_id = OWNER_USER_ID  # معرف المستخدم الخاص بالمطور
+
+# متغير لتخزين الأزرار المضافة
+custom_buttons = {}
 
 # دالة للتحقق من اشتراك المستخدم في القناة
 def is_user_subscribed(user_id):
@@ -35,7 +38,7 @@ def get_user_balance_markup(user):
     markup.add(btn_asia, btn_pubg)
     
     if user == developer_username:
-        btn_add_balance = types.KeyboardButton('شحن الرصيد')  # زر للمطور لشحن الرصيد
+        btn_add_balance = types.KeyboardButton('شحن الرصيد')
         markup.add(btn_add_balance)
     
     return markup
@@ -52,93 +55,69 @@ def send_welcome(message):
         markup = get_user_balance_markup(message.from_user.username)
         bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
 
-# التعامل مع كارتات آسيا
-@bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
-def asia_cards_handler(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-        return
-    
+# دالة لإضافة زر جديد فقط للمطور
+@bot.message_handler(func=lambda message: message.text == 'إضافة الأزرار' and message.from_user.username == developer_username)
+def ask_button_name(message):
+    bot.send_message(message.chat.id, "الرجاء إدخال اسم الزر الجديد:")
+    bot.register_next_step_handler(message, add_custom_button)
+
+def add_custom_button(message):
+    button_name = message.text
+    custom_buttons[button_name] = {}
+    bot.send_message(message.chat.id, f"تم إضافة الزر: {button_name}. الآن يمكن للمطور إضافة أزرار داخل هذا الزر.")
+    update_keyboards()
+
+# دالة لإضافة أزرار داخل الزر الرئيسي مع سعر
+@bot.message_handler(func=lambda message: message.text in custom_buttons and message.from_user.username == developer_username)
+def ask_inner_button_name(message):
+    parent_button = message.text
+    bot.send_message(message.chat.id, f"أدخل اسم الزر الداخلي الذي ترغب بإضافته إلى {parent_button}:")
+    bot.register_next_step_handler(message, ask_inner_button_price, parent_button)
+
+def ask_inner_button_price(message, parent_button):
+    inner_button_name = message.text
+    bot.send_message(message.chat.id, f"أدخل سعر الزر {inner_button_name}:")
+    bot.register_next_step_handler(message, add_inner_button, parent_button, inner_button_name)
+
+def add_inner_button(message, parent_button, inner_button_name):
+    try:
+        price = int(message.text)
+        custom_buttons[parent_button][inner_button_name] = price
+        bot.send_message(message.chat.id, f"تم إضافة الزر {inner_button_name} بسعر {price} إلى {parent_button}.")
+        update_keyboards()
+    except ValueError:
+        bot.send_message(message.chat.id, "الرجاء إدخال رقم صحيح للسعر.")
+
+# دالة لتحديث لوحة المفاتيح لجميع المستخدمين والمطور
+def update_keyboards():
+    for user in user_balances:
+        markup = get_user_balance_markup(user)
+        for custom_button in custom_buttons:
+            markup.add(types.KeyboardButton(custom_button))
+        bot.send_message(user, "تم تحديث القائمة:", reply_markup=markup)
+
+# معالجة اختيار الأزرار المخصصة
+@bot.message_handler(func=lambda message: message.text in custom_buttons)
+def handle_custom_button(message):
+    parent_button = message.text
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn_5dollars = types.KeyboardButton('5$')
-    btn_10dollars = types.KeyboardButton('10$')
-    btn_15dollars = types.KeyboardButton('15$')
-    btn_20dollars = types.KeyboardButton('20$')
-    btn_25dollars = types.KeyboardButton('25$')
-    btn_back = types.KeyboardButton('رجوع')
-
-    markup.add(btn_5dollars, btn_10dollars)
-    markup.add(btn_15dollars, btn_20dollars)
-    markup.add(btn_25dollars)
-    markup.add(btn_back)
     
-    bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
-
-# التعامل مع شدات ببجي
-@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
-def pubg_uc_handler(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-        return
+    for inner_button, price in custom_buttons[parent_button].items():
+        markup.add(types.KeyboardButton(f"{inner_button} - {price}"))
+    markup.add(types.KeyboardButton('رجوع'))
     
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn_60uc = types.KeyboardButton('60UC')
-    btn_360uc = types.KeyboardButton('360UC')
-    btn_660uc = types.KeyboardButton('660UC')
-    btn_720uc = types.KeyboardButton('720UC')
-    btn_1950uc = types.KeyboardButton('1950UC')
-    btn_back = types.KeyboardButton('رجوع')
+    bot.send_message(message.chat.id, f"اختر زرًا من {parent_button}:", reply_markup=markup)
 
-    markup.add(btn_60uc, btn_360uc)
-    markup.add(btn_660uc, btn_720uc)
-    markup.add(btn_1950uc)
-    markup.add(btn_back)
+# خصم الرصيد عند اختيار الأزرار الداخلية
+@bot.message_handler(func=lambda message: any(f"{btn} - " in message.text for btn in custom_buttons))
+def handle_inner_custom_button(message):
+    for parent_button, inner_buttons in custom_buttons.items():
+        for inner_button, price in inner_buttons.items():
+            if f"{inner_button} - {price}" == message.text:
+                ask_confirmation(message, price)
+                return
 
-    bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
-
-# معالجة خصم الرصيد عند اختيار شدات ببجي
-@bot.message_handler(func=lambda message: message.text in ['60UC', '360UC', '660UC', '720UC', '1950UC'])
-def handle_pubg_uc_selection(message):
-    price_map = {
-        '60UC': 3000,
-        '360UC': 8000,
-        '660UC': 14000,
-        '720UC': 16000,
-        '1950UC': 35000
-    }
-    
-    amount = price_map.get(message.text)
-    if amount:
-        ask_confirmation(message, amount)
-
-# معالجة خصم الرصيد عند اختيار كارتات آسيا
-@bot.message_handler(func=lambda message: message.text in ['5$', '10$', '15$', '20$', '25$'])
-def handle_asia_card_selection(message):
-    price_map = {
-        '5$': 7000,
-        '10$': 12000,
-        '15$': 17000,
-        '20$': 22000,
-        '25$': 27000
-    }
-    
-    amount = price_map.get(message.text)
-    if amount:
-        ask_confirmation(message, amount)
-
-# العودة إلى القائمة الرئيسية
-@bot.message_handler(func=lambda message: message.text == 'رجوع')
-def handle_back(message):
-    markup = get_user_balance_markup(message.from_user.username)
-    bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
-
-# تأكيد خصم الرصيد
+# دالة تأكيد خصم الرصيد
 def ask_confirmation(message, amount):
     markup = types.InlineKeyboardMarkup()
     btn_yes = types.InlineKeyboardButton("نعم", callback_data=f"confirm_yes_{amount}")
