@@ -101,8 +101,7 @@ def pubg_uc_handler(message):
     markup.add(btn_back)
 
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
-
-# معالجة خصم الرصيد عند اختيار شدات ببجي
+معالجة خصم الرصيد عند اختيار شدات ببجي
 @bot.message_handler(func=lambda message: message.text in ['60UC', '360UC', '660UC', '720UC', '1950UC'])
 def handle_pubg_uc_selection(message):
     price_map = {
@@ -204,7 +203,7 @@ def recharge_user(message, username):
         # نشر رسالة في القناة عند شحن الرصيد
         bot.send_message(
             CHANNEL_USERNAME,
-            f"تم شحن {amount} إلى المستخدم @{username} بواسطة المطور."
+            f" تم شحن المبلغ الى  {amount} إلى المستخدم @{username} بواسطة بـــوت سوبر تكنو ."
         )
 
         bot.send_message(message.chat.id, f"تم شحن {amount} إلى {username}.")
