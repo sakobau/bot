@@ -4,7 +4,7 @@ from telebot import types
 # ضع هنا الرمز الذي حصلت عليه من BotFather
 TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
 CHANNEL_USERNAME = '@arbi1001'  # اسم القناة مع علامة @
-OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور (الرسائل المحفوظة)
+OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -192,7 +192,7 @@ def ask_amount_for_recharge(message):
     bot.send_message(message.chat.id, f"اختر المبلغ لشحن {username}:", reply_markup=markup)
     bot.register_next_step_handler(message, recharge_user, username)
 
-# شحن المستخدم بالمبلغ المختار
+# شحن المستخدم بالمبلغ المختار مع نشر رسالة في القناة
 def recharge_user(message, username):
     try:
         amount = int(message.text)
@@ -200,6 +200,13 @@ def recharge_user(message, username):
             user_balances[username] += amount
         else:
             user_balances[username] = amount
+        
+        # نشر رسالة في القناة عند شحن الرصيد
+        bot.send_message(
+            CHANNEL_USERNAME,
+            f"تم شحن {amount} إلى المستخدم @{username} بواسطة المطور."
+        )
+
         bot.send_message(message.chat.id, f"تم شحن {amount} إلى {username}.")
     except ValueError:
         bot.send_message(message.chat.id, "الرجاء اختيار مبلغ صالح.")
