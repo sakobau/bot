@@ -15,9 +15,6 @@ user_balances = {}
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
 developer_id = 6649576561  # معرف المستخدم الخاص بالمطور
 
-# متغير لتخزين الأزرار المضافة
-custom_buttons = []
-
 # دالة للتحقق من اشتراك المستخدم في القناة
 def is_user_subscribed(user_id):
     try:
@@ -36,15 +33,8 @@ def get_user_balance_markup(user):
 
     markup.add(btn_balance)
     markup.add(btn_asia, btn_pubg)
-
-    # إضافة الأزرار المخصصة إذا كانت موجودة
-    for custom_button in custom_buttons:
-        markup.add(types.KeyboardButton(custom_button))
-
-    # إظهار زر "اضف الزر" فقط للمطور
+    
     if user == developer_username:
-        btn_add_button = types.KeyboardButton('اضف الزر')
-        markup.add(btn_add_button)
         btn_add_balance = types.KeyboardButton('شحن الرصيد')  # زر للمطور لشحن الرصيد
         markup.add(btn_add_balance)
     
@@ -112,25 +102,6 @@ def pubg_uc_handler(message):
 
     bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
 
-# إضافة زر جديد (للمطور فقط)
-@bot.message_handler(func=lambda message: message.text == 'اضف الزر' and message.from_user.username == developer_username)
-def ask_button_name(message):
-    bot.send_message(message.chat.id, "اكتب الآن اسم الزر:")
-    bot.register_next_step_handler(message, add_custom_button)
-
-# دالة لإضافة الزر الجديد إلى القائمة
-def add_custom_button(message):
-    button_name = message.text
-    custom_buttons.append(button_name)
-    bot.send_message(message.chat.id, f"تم إضافة الزر: {button_name}. الآن سيظهر للجميع.")
-    update_keyboards()
-
-# دالة لتحديث لوحة المفاتيح لجميع المستخدمين
-def update_keyboards():
-    for user in user_balances:
-        markup = get_user_balance_markup(user)
-        bot.send_message(user, "تم تحديث القائمة:", reply_markup=markup)
-
 # معالجة خصم الرصيد عند اختيار شدات ببجي
 @bot.message_handler(func=lambda message: message.text in ['60UC', '360UC', '660UC', '720UC', '1950UC'])
 def handle_pubg_uc_selection(message):
@@ -193,8 +164,6 @@ def confirm_yes(call):
     bot.send_message(call.message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'confirm_no')
-def confirm_no(call):
-    @bot.callback_query_handler(func=lambda call: call.data == 'confirm_no')
 def confirm_no(call):
     bot.answer_callback_query(call.id, "تم إلغاء العملية.")
     bot.send_message(call.message.chat.id, "تم إلغاء العملية.")
