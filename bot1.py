@@ -27,6 +27,10 @@ def is_user_subscribed(user_id):
 # دالة لإنشاء لوحة مفاتيح المستخدم
 def get_user_balance_markup(user):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # تعيين رصيد افتراضي إذا كان المستخدم غير موجود
+    if user not in user_balances:
+        user_balances[user] = 0
+
     balance = user_balances.get(user, 0)
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
     btn_asia = types.KeyboardButton('كارتات اسيا')
