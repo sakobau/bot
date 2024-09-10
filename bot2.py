@@ -27,7 +27,7 @@ def get_price(update: Update, context: CallbackContext) -> None:
 # الدالة الرئيسية
 def main():
     # إضافة التوكن الخاص بك هنا
-    updater = Updater("7242581979:AAGq_4IqGxPHsVdtp2ikeoYLwm0wwZawzz0", use_context=True)
+    updater = Updater("7229881570:AAHeGfWQFr0LibYjoPhwPyPXrlNpJhspe8M", use_context=True)
 
     dp = updater.dispatcher
 
