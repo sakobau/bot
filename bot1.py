@@ -1,6 +1,7 @@
 import telebot
 from telebot import types
 from datetime import datetime
+import requests  # إضافة مكتبة requests للتعامل مع API
 
 # ضع هنا الرمز الذي حصلت عليه من BotFather
 TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
@@ -15,6 +16,39 @@ user_balances = {}
 # معرف المطور
 developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
 developer_id = 6649576561  # معرف المستخدم الخاص بالمطور
+
+# التوكن الخاص بتطبيق فاتورة
+FATOORAH_API_TOKEN = "6f342319-2428-4fcb-a6b6-2b5d0859c2ec"
+FATOORAH_API_URL = "https://fatoorah.com/api/v2/invoice/create"  # رابط API لفاتورة
+
+# دالة لإنشاء الفاتورة عبر تطبيق فاتورة
+def create_fatoorah_invoice(user, amount):
+    # البيانات التي نرسلها لإنشاء الفاتورة
+    data = {
+        "CustomerName": user,
+        "CustomerEmail": f"{user}@example.com",  # هنا يمكنك وضع إيميل افتراضي أو تخصيصه
+        "Amount": amount,
+        "Currency": "USD",  # العملة التي سيتم استخدامها
+        "PaymentMethod": "CreditCard"  # طريقة الدفع يمكن تعديلها لاحقًا
+    }
+
+    headers = {
+        "Authorization": f"Bearer {FATOORAH_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(FATOORAH_API_URL, json=data, headers=headers)
+        if response.status_code == 200:
+            invoice_data = response.json()
+            invoice_url = invoice_data.get('InvoiceURL', 'No URL Found')
+            return invoice_url  # يعيد رابط الفاتورة
+        else:
+            print(f"Error creating invoice: {response.status_code}, {response.text}")
+            return None
+    except Exception as e:
+        print(f"Exception while creating invoice: {e}")
+        return None
 
 # دالة للتحقق من اشتراك المستخدم في القناة
 def is_user_subscribed(user_id):
@@ -31,7 +65,6 @@ def get_user_balance_markup(user):
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
     btn_asia = types.KeyboardButton('كارتات اسيا')
     btn_pubg = types.KeyboardButton('شدات ببجي')
-    btn_pubg = types.KeyboardButton('رابط هدية')
 
     markup.add(btn_balance)
     markup.add(btn_asia, btn_pubg)
@@ -156,23 +189,29 @@ def confirm_yes(call):
     user = call.from_user.username
 
     if deduct_balance(user, amount):
-        bot.answer_callback_query(call.id, f"تم خصم {amount} من رصيدك.")
-        bot.send_message(call.message.chat.id, f"تم استقطاع {amount} من رصيدك.")
-        
-        # نشر رسالة في القناة عند شحن الرصيد
-        now = datetime.now()
-        current_date = now.strftime("%Y-%m-%d")
-        bot.send_message(
-            CHANNEL_USERNAME,
-            f"تم تسليم طلب جديد ☑️\n"
-            f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
-            f"🏷 ¦ السلعة : شحن رصيد\n"
-            f"💰 ¦ السعر : {amount}\n"
-            f"📆 ¦ التاريخ : {current_date}\n\n"
-            f"معلومات المُشتري 🪪\n"
-            f"🏷 ¦ اليوزر @{user}\n"
-            f"🆔 ¦ الأيدي {call.from_user.id}\n"
-        )
+        invoice_url = create_fatoorah_invoice(user, amount)  # إنشاء الفاتورة عبر تطبيق فاتورة
+
+        if invoice_url:
+            bot.answer_callback_query(call.id, f"تم خصم {amount} من رصيدك.")
+            bot.send_message(bot.send_message(call.message.chat.id, f"تم استقطاع {amount} من رصيدك.\nرابط الفاتورة: {invoice_url}")
+
+            # نشر رسالة في القناة عند شحن الرصيد
+            now = datetime.now()
+            current_date = now.strftime("%Y-%m-%d")
+            bot.send_message(
+                CHANNEL_USERNAME,
+                f"تم تسليم طلب جديد ☑️\n"
+                f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
+                f"🏷 ¦ السلعة : شحن رصيد\n"
+                f"💰 ¦ السعر : {amount}\n"
+                f"📆 ¦ التاريخ : {current_date}\n\n"
+                f"معلومات المُشتري 🪪\n"
+                f"🏷 ¦ اليوزر @{user}\n"
+                f"🆔 ¦ الأيدي {call.from_user.id}\n"
+            )
+        else:
+            bot.answer_callback_query(call.id, "حدث خطأ في إنشاء الفاتورة.")
+            bot.send_message(call.message.chat.id, "حدث خطأ أثناء إنشاء الفاتورة. حاول مرة أخرى لاحقًا.")
     else:
         bot.answer_callback_query(call.id, "رصيدك غير كافٍ.")
         bot.send_message(call.message.chat.id, "رصيدك غير كافٍ.")
@@ -196,7 +235,8 @@ def deduct_balance(user, amount):
 @bot.message_handler(func=lambda message: message.text == 'شحن الرصيد' and message.from_user.username == developer_username)
 def ask_user_for_recharge(message):
     bot.send_message(message.chat.id, "الرجاء إرسال اسم المستخدم لشحن الرصيد.")
-    # استقبال اسم المستخدم لشحن الرصيد
+    
+# استقبال اسم المستخدم لشحن الرصيد
 @bot.message_handler(func=lambda message: message.from_user.username == developer_username and message.text.startswith('@'))
 def ask_amount_for_recharge(message):
     username = message.text.lstrip('@')
