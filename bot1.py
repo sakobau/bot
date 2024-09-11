@@ -31,6 +31,7 @@ def get_user_balance_markup(user):
     btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
     btn_asia = types.KeyboardButton('كارتات اسيا')
     btn_pubg = types.KeyboardButton('شدات ببجي')
+    btn_pubg = types.KeyboardButton('رابط هدية')
 
     markup.add(btn_balance)
     markup.add(btn_asia, btn_pubg)
