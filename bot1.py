@@ -118,4 +118,7 @@ def handle_dynamic_inputs(message):
         user_states.pop(message.from_user.id)  # إزالة الحالة
 
 # تشغيل البوت في وضع الاستماع
-bot.polling()
+try:
+    bot.polling(none_stop=True)
+except Exception as e:
+    print(f"Error: {e}")
