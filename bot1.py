@@ -1,238 +1,110 @@
 import telebot
 from telebot import types
-from datetime import datetime
 
-# ضع هنا الرمز الذي حصلت عليه من BotFather
-TOKEN = '7159716290:AAGTxMlWTfNZ9nI6dz0DbDanqP3TMw8u6SM'
-CHANNEL_USERNAME = '@arbi1001'  # اسم القناة مع علامة @
-OWNER_USER_ID = 6649576561  # User ID الخاص بالمطور (الرسائل المحفوظة)
+# توكن البوت الذي حصلت عليه من BotFather
+API_TOKEN = '7889761662:AAETDbWkCIX_sDXEQWai9LYeMkdg7NAtUoE'
 
-bot = telebot.TeleBot(TOKEN)
+# اسم المستخدم الخاص بالمطور
+DEVELOPER_USERNAME = 'm_55mg'
 
-# متغير لتخزين الرصيد لكل مستخدم
-user_balances = {}
+# إنشاء كائن البوت
+bot = telebot.TeleBot(API_TOKEN)
 
-# معرف المطور
-developer_username = 'm_55mg'  # بدون علامة @ للتوافق مع الرسالة القادمة من تليجرام
-developer_id = 6649576561  # معرف المستخدم الخاص بالمطور
+# متغير لتخزين الحالة الحالية للمستخدم
+user_states = {}
 
-# دالة للتحقق من اشتراك المستخدم في القناة
-def is_user_subscribed(user_id):
-    try:
-        user_status = bot.get_chat_member(CHANNEL_USERNAME, user_id).status
-        return user_status in ['member', 'administrator', 'creator']
-    except Exception as e:
-        return False
-
-# دالة لإنشاء لوحة مفاتيح المستخدم
-def get_user_balance_markup(user):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    balance = user_balances.get(user, 0)
-    btn_balance = types.KeyboardButton(f'الرصيد: {balance}')
-    btn_asia = types.KeyboardButton('كارتات اسيا')
-    btn_pubg = types.KeyboardButton('شدات ببجي')
-
-    markup.add(btn_balance)
-    markup.add(btn_asia, btn_pubg)
-    
-    if user == developer_username:
-        btn_add_balance = types.KeyboardButton('شحن الرصيد')  # زر للمطور لشحن الرصيد
-        markup.add(btn_add_balance)
-    
-    return markup
-
-# ترحيب المستخدم
+# التعامل مع الرسائل التي تحتوي على أمر /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-    else:
-        markup = get_user_balance_markup(message.from_user.username)
-        bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
-
-# التعامل مع كارتات آسيا
-@bot.message_handler(func=lambda message: message.text == 'كارتات اسيا')
-def asia_cards_handler(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-        return
+    welcome_text = (
+        "هذا البوت مبرمج من المطور مصطفى الاسدي و يوزره @m_55mg\n"
+        "يمكنه برمجة تطبيقات و بوتات، يرجى ارسال استفسارك "
+    )
     
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn_5dollars = types.KeyboardButton('5$')
-    btn_10dollars = types.KeyboardButton('10$')
-    btn_15dollars = types.KeyboardButton('15$')
-    btn_20dollars = types.KeyboardButton('20$')
-    btn_25dollars = types.KeyboardButton('25$')
-    btn_back = types.KeyboardButton('رجوع')
-
-    markup.add(btn_5dollars, btn_10dollars)
-    markup.add(btn_15dollars, btn_20dollars)
-    markup.add(btn_25dollars)
-    markup.add(btn_back)
-    
-    bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
-
-# التعامل مع شدات ببجي
-@bot.message_handler(func=lambda message: message.text == 'شدات ببجي')
-def pubg_uc_handler(message):
-    if not is_user_subscribed(message.from_user.id):
-        markup = types.InlineKeyboardMarkup()
-        btn_subscribe = types.InlineKeyboardButton("اشترك في القناة", url=f"https://t.me/{CHANNEL_USERNAME.lstrip('@')}")
-        markup.add(btn_subscribe)
-        bot.send_message(message.chat.id, f"من فضلك اشترك في القناة {CHANNEL_USERNAME} لاستخدام البوت.", reply_markup=markup)
-        return
-    
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn_60uc = types.KeyboardButton('60UC')
-    btn_360uc = types.KeyboardButton('360UC')
-    btn_660uc = types.KeyboardButton('660UC')
-    btn_720uc = types.KeyboardButton('720UC')
-    btn_1950uc = types.KeyboardButton('1950UC')
-    btn_back = types.KeyboardButton('رجوع')
-
-    markup.add(btn_60uc, btn_360uc)
-    markup.add(btn_660uc, btn_720uc)
-    markup.add(btn_1950uc)
-    markup.add(btn_back)
-
-    bot.send_message(message.chat.id, "اختر القيمة المطلوبة:", reply_markup=markup)
-
-# معالجة خصم الرصيد عند اختيار شدات ببجي
-@bot.message_handler(func=lambda message: message.text in ['60UC', '360UC', '660UC', '720UC', '1950UC'])
-def handle_pubg_uc_selection(message):
-    price_map = {
-        '60UC': 3000,
-        '360UC': 8000,
-        '660UC': 14000,
-        '720UC': 16000,
-        '1950UC': 35000
-    }
-    
-    amount = price_map.get(message.text)
-    if amount:
-        ask_confirmation(message, amount)
-
-# معالجة خصم الرصيد عند اختيار كارتات آسيا
-@bot.message_handler(func=lambda message: message.text in ['5$', '10$', '15$', '20$', '25$'])
-def handle_asia_card_selection(message):
-    price_map = {
-        '5$': 7000,
-        '10$': 12000,
-        '15$': 17000,
-        '20$': 22000,
-        '25$': 27000
-    }
-    
-    amount = price_map.get(message.text)
-    if amount:
-        ask_confirmation(message, amount)
-
-# العودة إلى القائمة الرئيسية
-@bot.message_handler(func=lambda message: message.text == 'رجوع')
-def handle_back(message):
-    markup = get_user_balance_markup(message.from_user.username)
-    bot.send_message(message.chat.id, "اختر من القائمة:", reply_markup=markup)
-
-# تأكيد خصم الرصيد
-def ask_confirmation(message, amount):
     markup = types.InlineKeyboardMarkup()
-    btn_yes = types.InlineKeyboardButton("نعم", callback_data=f"confirm_yes_{amount}")
-    btn_no = types.InlineKeyboardButton("لا", callback_data="confirm_no")
-    markup.add(btn_yes, btn_no)
+    button = types.InlineKeyboardButton("هنا", url="https://sakobau.github.io/inventory/")
+    add_button = types.InlineKeyboardButton("اضف زر +", callback_data="add_button")
     
-    bot.send_message(message.chat.id, f"هل تريد استقطاع مبلغ {amount} من رصيدك؟", reply_markup=markup)
+    markup.add(button, add_button)
 
-# تأكيد نعم لخصم الرصيد
-@bot.callback_query_handler(func=lambda call: call.data.startswith('confirm_yes_'))
-def confirm_yes(call):
-    amount = int(call.data.split('_')[-1])
-    user = call.from_user.username
+    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
-    if deduct_balance(user, amount):
-        bot.answer_callback_query(call.id, f"تم خصم {amount} من رصيدك.")
-        bot.send_message(call.message.chat.id, f"تم استقطاع {amount} من رصيدك.")
+# التعامل مع الضغط على زر "اضف زر +"
+@bot.callback_query_handler(func=lambda call: call.data == "add_button")
+def handle_add_button(call):
+    user_states[call.from_user.id] = 'waiting_for_button_name'
+    bot.answer_callback_query(call.id, "الرجاء إدخال اسم الزر:")
+    bot.send_message(call.message.chat.id, "الرجاء إدخال اسم الزر:")
+
+# التعامل مع الرسائل النصية
+@bot.message_handler(func=lambda message: message.from_user.id in user_states)
+def handle_text(message):
+    state = user_states[message.from_user.id]
+
+    if state == 'waiting_for_button_name':
+        user_states[message.from_user.id] = 'waiting_for_button_content'
+        user_states[message.from_user.id + "_button_name"] = message.text  # تخزين اسم الزر
+        bot.send_message(message.chat.id, "الرجاء إدخال محتوى الزر:")
+    
+    elif state == 'waiting_for_button_content':
+        button_name = user_states.pop(message.from_user.id + "_button_name", None)
+        user_states[message.from_user.id] = 'waiting_for_option'
+        bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: {message.text}\nاختر من الخيارات التالية:")
         
-        # نشر رسالة في القناة عند شحن الرصيد
-        now = datetime.now()
-        current_date = now.strftime("%Y-%m-%d")
-        bot.send_message(
-            CHANNEL_USERNAME,
-            f"تم تسليم طلب جديد ☑️\n"
-            f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
-            f"🏷 ¦ السلعة : شحن رصيد\n"
-            f"💰 ¦ السعر : {amount}\n"
-            f"📆 ¦ التاريخ : {current_date}\n\n"
-            f"معلومات المُشتري 🪪\n"
-            f"🏷 ¦ اليوزر @{user}\n"
-            f"🆔 ¦ الأيدي {call.from_user.id}\n"
-        )
-    else:
-        bot.answer_callback_query(call.id, "رصيدك غير كافٍ.")
-        bot.send_message(call.message.chat.id, "رصيدك غير كافٍ.")
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("صورة 🛡", callback_data="add_image"))
+        markup.add(types.InlineKeyboardButton("نـــــص 🖥", callback_data="add_text"))
+        markup.add(types.InlineKeyboardButton("سلعة ✨", callback_data="add_product"))
+        markup.add(types.InlineKeyboardButton("رابط 📟", callback_data="add_link"))
+        markup.add(types.InlineKeyboardButton("الرجوع", callback_data="go_back"))
+
+        bot.send_message(message.chat.id, "اختر نوع الزر الذي تريد إضافته:", reply_markup=markup)
+
+# التعامل مع خيارات الأزرار
+@bot.callback_query_handler(func=lambda call: call.data in ["add_image", "add_text", "add_product", "add_link", "go_back"])
+def handle_options(call):
+    if call.data == "go_back":
+        send_welcome(call.message)  # العودة للقائمة الرئيسية
+        return
     
-    markup = get_user_balance_markup(user)
-    bot.send_message(call.message.chat.id, "تم تحديث الرصيد:", reply_markup=markup)
-
-@bot.callback_query_handler(func=lambda call: call.data == 'confirm_no')
-def confirm_no(call):
-    bot.answer_callback_query(call.id, "تم إلغاء العملية.")
-    bot.send_message(call.message.chat.id, "تم إلغاء العملية.")
-
-# دالة خصم الرصيد
-def deduct_balance(user, amount):
-    if user in user_balances and user_balances[user] >= amount:
-        user_balances[user] -= amount
-        return True
-    return False
-
-# شحن الرصيد (للمطور فقط)
-@bot.message_handler(func=lambda message: message.text == 'شحن الرصيد' and message.from_user.username == developer_username)
-def ask_user_for_recharge(message):
-    bot.send_message(message.chat.id, "الرجاء إرسال اسم المستخدم لشحن الرصيد.")
-    # استقبال اسم المستخدم لشحن الرصيد
-@bot.message_handler(func=lambda message: message.from_user.username == developer_username and message.text.startswith('@'))
-def ask_amount_for_recharge(message):
-    username = message.text.lstrip('@')
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    # حسب الزر المحدد، اطلب من المستخدم إدخال البيانات المناسبة
+    if call.data == "add_image":
+        user_states[call.from_user.id] = 'waiting_for_image'
+        bot.answer_callback_query(call.id, "يرجى إرسال الصورة المطلوبة.")
     
-    for amount in range(10000, 100001, 10000):
-        markup.add(types.KeyboardButton(f'{amount}'))
+    elif call.data == "add_text":
+        user_states[call.from_user.id] = 'waiting_for_text'
+        bot.answer_callback_query(call.id, "يرجى إدخال النص المطلوب.")
     
-    bot.send_message(message.chat.id, f"اختر المبلغ لشحن {username}:", reply_markup=markup)
-    bot.register_next_step_handler(message, recharge_user, username)
+    elif call.data == "add_product":
+        user_states[call.from_user.id] = 'waiting_for_product'
+        bot.answer_callback_query(call.id, "يرجى إدخال سعر السلعة ووصفها.")
+    
+    elif call.data == "add_link":
+        user_states[call.from_user.id] = 'waiting_for_link'
+        bot.answer_callback_query(call.id, "يرجى إدخال وصف الرابط والرابط المطلوب.")
 
-# شحن المستخدم بالمبلغ المختار
-def recharge_user(message, username):
-    try:
-        amount = int(message.text)
-        if username in user_balances:
-            user_balances[username] += amount
-        else:
-            user_balances[username] = amount
-        bot.send_message(message.chat.id, f"تم شحن {amount} إلى {username}.")
+# التعامل مع الرسائل حسب حالة المستخدم
+@bot.message_handler(func=lambda message: message.from_user.id in user_states)
+def handle_dynamic_inputs(message):
+    state = user_states[message.from_user.id]
 
-        # نشر رسالة في القناة عند شحن الرصيد
-        now = datetime.now()
-        current_date = now.strftime("%Y-%m-%d")
-        bot.send_message(
-            CHANNEL_USERNAME,
-            f"تم تسليم طلب جديد ☑️\n"
-            f"من بوت سوبر تكنو: @mmssttff_bot 🫤\n\n"
-            f"🏷 ¦ السلعة : شحن رصيد\n"
-            f"💰 ¦ السعر : {amount}\n"
-            f"📆 ¦ التاريخ : {current_date}\n\n"
-            f"معلومات المُشتري 🪪\n"
-            f"🏷 ¦ اليوزر @{username}\n"
-            f"🆔 ¦ الأيدي {message.from_user.id}\n"
-        )
-    except ValueError:
-        bot.send_message(message.chat.id, "الرجاء اختيار مبلغ صالح.")
+    if state == 'waiting_for_image':
+        # هنا يمكنك معالجة الصورة المرسلة
+        bot.send_message(message.chat.id, "تم استلام الصورة.")
+        user_states.pop(message.from_user.id)  # إزالة الحالة
+    
+    elif state == 'waiting_for_text':
+        bot.send_message(message.chat.id, f"تم استلام النص: {message.text}")
+        user_states.pop(message.from_user.id)  # إزالة الحالة
+    
+    elif state == 'waiting_for_product':
+        bot.send_message(message.chat.id, f"تم استلام المنتج: {message.text}")
+        user_states.pop(message.from_user.id)  # إزالة الحالة
 
-# بدء تشغيل البوت
+    elif state == 'waiting_for_link':
+        bot.send_message(message.chat.id, f"تم استلام الرابط: {message.text}")
+        user_states.pop(message.from_user.id)  # إزالة الحالة
+
+# تشغيل البوت في وضع الاستماع
 bot.polling()
