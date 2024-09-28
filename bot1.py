@@ -40,7 +40,6 @@ def handle_add_button(call):
 @bot.message_handler(func=lambda message: message.from_user.id in user_states)
 def handle_text(message):
     state = user_states[message.from_user.id]
-    print(f"Current state for user {message.from_user.id}: {state}")  # تصحيح: طباعة الحالة الحالية
 
     if state == 'waiting_for_button_name':
         if message.text.strip():  # تأكد من أن المدخل ليس فارغًا
@@ -80,25 +79,24 @@ def handle_options(call):
     # حسب الزر المحدد، اطلب من المستخدم إدخال البيانات المناسبة
     if call.data == "add_image":
         user_states[call.from_user.id] = 'waiting_for_image'
-        bot.answer_callback_query(call.id, "يرجى إرسال الصورة المطلوبة.")
+        bot.send_message(call.message.chat.id, "يرجى إرسال الصورة المطلوبة.")
     
     elif call.data == "add_text":
         user_states[call.from_user.id] = 'waiting_for_text'
-        bot.answer_callback_query(call.id, "يرجى إدخال النص المطلوب.")
+        bot.send_message(call.message.chat.id, "يرجى إدخال النص المطلوب.")
     
     elif call.data == "add_product":
         user_states[call.from_user.id] = 'waiting_for_product'
-        bot.answer_callback_query(call.id, "يرجى إدخال سعر السلعة ووصفها.")
+        bot.send_message(call.message.chat.id, "يرجى إدخال سعر السلعة ووصفها.")
     
     elif call.data == "add_link":
         user_states[call.from_user.id] = 'waiting_for_link'
-        bot.answer_callback_query(call.id, "يرجى إدخال وصف الرابط والرابط المطلوب.")
+        bot.send_message(call.message.chat.id, "يرجى إدخال وصف الرابط والرابط المطلوب.")
 
 # التعامل مع الرسائل حسب حالة المستخدم
 @bot.message_handler(func=lambda message: message.from_user.id in user_states)
 def handle_dynamic_inputs(message):
     state = user_states[message.from_user.id]
-    print(f"Processing input for user {message.from_user.id}: {state}")  # تصحيح: طباعة حالة الإدخال
 
     if state == 'waiting_for_image':
         # هنا يمكنك معالجة الصورة المرسلة
