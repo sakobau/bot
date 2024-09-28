@@ -21,20 +21,24 @@ def send_welcome(message):
         "يمكنه برمجة تطبيقات و بوتات، يرجى ارسال استفسارك "
     )
     
-    markup = types.InlineKeyboardMarkup()
-    button = types.InlineKeyboardButton("هنا", url="https://sakobau.github.io/inventory/")
-    add_button = types.InlineKeyboardButton("اضف زر +", callback_data="add_button")
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button = types.KeyboardButton("هنا")
+    add_button = types.KeyboardButton("اضف زر +")
     
     markup.add(button, add_button)
 
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
+# التعامل مع الرسائل النصية
+@bot.message_handler(func=lambda message: message.text == "هنا")
+def send_link(message):
+    bot.send_message(message.chat.id, "رابط الاستفسارات: https://sakobau.github.io/inventory/")
+
 # التعامل مع الضغط على زر "اضف زر +"
-@bot.callback_query_handler(func=lambda call: call.data == "add_button")
-def handle_add_button(call):
-    user_states[call.from_user.id] = 'waiting_for_button_name'
-    bot.answer_callback_query(call.id, "الرجاء إدخال اسم الزر:")
-    bot.send_message(call.message.chat.id, "الرجاء إدخال اسم الزر:")
+@bot.message_handler(func=lambda message: message.text == "اضف زر +")
+def handle_add_button(message):
+    user_states[message.from_user.id] = 'waiting_for_button_name'
+    bot.send_message(message.chat.id, "الرجاء إدخال اسم الزر:")
 
 # التعامل مع الرسائل النصية
 @bot.message_handler(func=lambda message: message.from_user.id in user_states)
@@ -58,40 +62,38 @@ def handle_text(message):
             # إرسال تأكيد مع محتوى الزر
             bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: '{button_content}'\nاختر من الخيارات التالية:")
             
-            markup = types.InlineKeyboardMarkup()
-            markup.add(types.InlineKeyboardButton("صورة 🛡", callback_data="add_image"))
-            markup.add(types.InlineKeyboardButton("نـــــص 🖥", callback_data="add_text"))
-            markup.add(types.InlineKeyboardButton("سلعة ✨", callback_data="add_product"))
-            markup.add(types.InlineKeyboardButton("رابط 📟", callback_data="add_link"))
-            markup.add(types.InlineKeyboardButton("الرجوع", callback_data="go_back"))
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup.add("صورة 🛡", "نـــــص 🖥")
+            markup.add("سلعة ✨", "رابط 📟")
+            markup.add("الرجوع")
 
             bot.send_message(message.chat.id, "اختر نوع الزر الذي تريد إضافته:", reply_markup=markup)
         else:
             bot.send_message(message.chat.id, "حدث خطأ، يرجى إعادة المحاولة.")
 
 # التعامل مع خيارات الأزرار
-@bot.callback_query_handler(func=lambda call: call.data in ["add_image", "add_text", "add_product", "add_link", "go_back"])
-def handle_options(call):
-    if call.data == "go_back":
-        send_welcome(call.message)  # العودة للقائمة الرئيسية
+@bot.message_handler(func=lambda message: message.text in ["صورة 🛡", "نـــــص 🖥", "سلعة ✨", "رابط 📟", "الرجوع"])
+def handle_options(message):
+    if message.text == "الرجوع":
+        send_welcome(message)  # العودة للقائمة الرئيسية
         return
     
     # حسب الزر المحدد، اطلب من المستخدم إدخال البيانات المناسبة
-    if call.data == "add_image":
-        user_states[call.from_user.id] = 'waiting_for_image'
-        bot.send_message(call.message.chat.id, "يرجى إرسال الصورة المطلوبة.")
+    if message.text == "صورة 🛡":
+        user_states[message.from_user.id] = 'waiting_for_image'
+        bot.send_message(message.chat.id, "يرجى إرسال الصورة المطلوبة.")
     
-    elif call.data == "add_text":
-        user_states[call.from_user.id] = 'waiting_for_text'
-        bot.send_message(call.message.chat.id, "يرجى إدخال النص المطلوب.")
+    elif message.text == "نـــــص 🖥":
+        user_states[message.from_user.id] = 'waiting_for_text'
+        bot.send_message(message.chat.id, "يرجى إدخال النص المطلوب.")
     
-    elif call.data == "add_product":
-        user_states[call.from_user.id] = 'waiting_for_product'
-        bot.send_message(call.message.chat.id, "يرجى إدخال سعر السلعة ووصفها.")
+    elif message.text == "سلعة ✨":
+        user_states[message.from_user.id] = 'waiting_for_product'
+        bot.send_message(message.chat.id, "يرجى إدخال سعر السلعة ووصفها.")
     
-    elif call.data == "add_link":
-        user_states[call.from_user.id] = 'waiting_for_link'
-        bot.send_message(call.message.chat.id, "يرجى إدخال وصف الرابط والرابط المطلوب.")
+    elif message.text == "رابط 📟":
+        user_states[message.from_user.id] = 'waiting_for_link'
+        bot.send_message(message.chat.id, "يرجى إدخال وصف الرابط والرابط المطلوب.")
 
 # التعامل مع الرسائل حسب حالة المستخدم
 @bot.message_handler(func=lambda message: message.from_user.id in user_states)
