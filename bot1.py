@@ -42,26 +42,32 @@ def handle_text(message):
     state = user_states[message.from_user.id]
 
     if state == 'waiting_for_button_name':
-        user_states[message.from_user.id] = 'waiting_for_button_content'
-        user_states[message.from_user.id + "_button_name"] = message.text  # تخزين اسم الزر
-        bot.send_message(message.chat.id, "الرجاء إدخال محتوى الزر:")
-    
+        if message.text.strip():  # تأكد من أن المدخل ليس فارغًا
+            user_states[message.from_user.id] = 'waiting_for_button_content'
+            user_states[message.from_user.id + "_button_name"] = message.text  # تخزين اسم الزر
+            bot.send_message(message.chat.id, "الرجاء إدخال محتوى الزر:")
+        else:
+            bot.send_message(message.chat.id, "الاسم المدخل غير صالح، يرجى إدخال اسم زر صالح.")
+
     elif state == 'waiting_for_button_content':
         button_name = user_states.pop(message.from_user.id + "_button_name", None)
-        button_content = message.text  # الحصول على محتوى الزر
-        user_states[message.from_user.id] = 'waiting_for_option'
-        
-        # إرسال تأكيد مع محتوى الزر
-        bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: '{button_content}'\nاختر من الخيارات التالية:")
-        
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("صورة 🛡", callback_data="add_image"))
-        markup.add(types.InlineKeyboardButton("نـــــص 🖥", callback_data="add_text"))
-        markup.add(types.InlineKeyboardButton("سلعة ✨", callback_data="add_product"))
-        markup.add(types.InlineKeyboardButton("رابط 📟", callback_data="add_link"))
-        markup.add(types.InlineKeyboardButton("الرجوع", callback_data="go_back"))
+        if button_name:  # تحقق من وجود اسم الزر
+            button_content = message.text  # الحصول على محتوى الزر
+            user_states[message.from_user.id] = 'waiting_for_option'
+            
+            # إرسال تأكيد مع محتوى الزر
+            bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: '{button_content}'\nاختر من الخيارات التالية:")
+            
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("صورة 🛡", callback_data="add_image"))
+            markup.add(types.InlineKeyboardButton("نـــــص 🖥", callback_data="add_text"))
+            markup.add(types.InlineKeyboardButton("سلعة ✨", callback_data="add_product"))
+            markup.add(types.InlineKeyboardButton("رابط 📟", callback_data="add_link"))
+            markup.add(types.InlineKeyboardButton("الرجوع", callback_data="go_back"))
 
-        bot.send_message(message.chat.id, "اختر نوع الزر الذي تريد إضافته:", reply_markup=markup)
+            bot.send_message(message.chat.id, "اختر نوع الزر الذي تريد إضافته:", reply_markup=markup)
+        else:
+            bot.send_message(message.chat.id, "حدث خطأ، يرجى إعادة المحاولة.")
 
 # التعامل مع خيارات الأزرار
 @bot.callback_query_handler(func=lambda call: call.data in ["add_image", "add_text", "add_product", "add_link", "go_back"])
