@@ -40,6 +40,7 @@ def handle_add_button(call):
 @bot.message_handler(func=lambda message: message.from_user.id in user_states)
 def handle_text(message):
     state = user_states[message.from_user.id]
+    print(f"Current state for user {message.from_user.id}: {state}")  # تصحيح: طباعة الحالة الحالية
 
     if state == 'waiting_for_button_name':
         if message.text.strip():  # تأكد من أن المدخل ليس فارغًا
@@ -97,6 +98,7 @@ def handle_options(call):
 @bot.message_handler(func=lambda message: message.from_user.id in user_states)
 def handle_dynamic_inputs(message):
     state = user_states[message.from_user.id]
+    print(f"Processing input for user {message.from_user.id}: {state}")  # تصحيح: طباعة حالة الإدخال
 
     if state == 'waiting_for_image':
         # هنا يمكنك معالجة الصورة المرسلة
