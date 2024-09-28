@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # توكن البوت الذي حصلت عليه من BotFather
-API_TOKEN = 'YOUR_BOT_TOKEN'
+API_TOKEN = '7889761662:AAETDbWkCIX_sDXEQWai9LYeMkdg7NAtUoE'
 
 # اسم المستخدم الخاص بالمطور
 DEVELOPER_USERNAME = 'm_55mg'
@@ -48,8 +48,11 @@ def handle_text(message):
     
     elif state == 'waiting_for_button_content':
         button_name = user_states.pop(message.from_user.id + "_button_name", None)
+        button_content = message.text  # الحصول على محتوى الزر
         user_states[message.from_user.id] = 'waiting_for_option'
-        bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: {message.text}\nاختر من الخيارات التالية:")
+        
+        # إرسال تأكيد مع محتوى الزر
+        bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: '{button_content}'\nاختر من الخيارات التالية:")
         
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("صورة 🛡", callback_data="add_image"))
