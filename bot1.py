@@ -1,49 +1,74 @@
-import telebot
-from telebot import types
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 
-# تعيين التوكن الخاص بالبوت
-TOKEN = '8131016207:AAHC6QQIHw48c-XHCRQAYMOKk5PUu3n3vws'
-bot = telebot.TeleBot(TOKEN)
+# متغير لتخزين رصيد الحساب (يتم تحديثه فقط بواسطة المطور)
+account_balance = 0
 
-# دالة معالجة الأمر /start
-@bot.message_handler(commands=['start'])
-def start(message):
-    # قيمة رصيد الحساب (تبدأ من 0 ويمكن تعديلها من قبل المطور)
-    account_balance = 0
-    
-    # إعداد الرسالة الترحيبية
-    welcome_message = "مرحبا بك في متجر ســـــــــــوبر تــــــكنو للخدمات الالكترونية\nللاستفسار مراسلة المطور @m_55mg"
+# اسم المستخدم الخاص بالمطور الذي يمكنه تعبئة الرصيد
+developer_username = "m_55mg"  # استبدل بـ اسم المستخدم الخاص بالمطور
 
-    # إعداد الأزرار باستخدام InlineKeyboardMarkup
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    
-    # الأزرار القابلة للضغط
-    button_1 = types.InlineKeyboardButton(text="تعبئة رصيد حسابي", callback_data='balance_fill')
-    button_2 = types.InlineKeyboardButton(text="كارت هاتف", callback_data='phone_card')
-    button_3 = types.InlineKeyboardButton(text="كارت شحن العاب", callback_data='game_card')
-    button_4 = types.InlineKeyboardButton(text="كارت تطبيقات", callback_data='app_card')
+# تابع لتنفيذ الأمر /start عند الضغط عليه
+def start(update: Update, context: CallbackContext) -> None:
+    keyboard = [
+        [InlineKeyboardButton(f"رصيد حسابي: {account_balance}", callback_data='balance')],
+        [InlineKeyboardButton("تعبئة رصيد حسابي", callback_data='top_up')],
+        [InlineKeyboardButton("كارت هاتف", callback_data='mobile_card')],
+        [InlineKeyboardButton("كارت شحن العاب", callback_data='game_card')],
+        [InlineKeyboardButton("كارت تطبيقات", callback_data='app_card')]
+    ]
 
-    # زر رصيد الحساب الذي لا يمكن الضغط عليه
-    account_balance_button = types.InlineKeyboardButton(text=f"رصيد حسابي: {account_balance}", callback_data=None)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(
+        'مرحبا بك في متجر ســـــــــــوبر تــــــكنو للخدمات الالكترونية\n'
+        'للاستفسار مراسلة المطور @m_55mg',
+        reply_markup=reply_markup
+    )
 
-    # إضافة الأزرار إلى الواجهة
-    markup.add(account_balance_button)  # زر الرصيد في الأعلى
-    markup.add(button_1, button_2, button_3, button_4)  # الأزرار الأخرى
+# تابع لتحديث رصيد الحساب فقط بواسطة المطور
+def top_up(update: Update, context: CallbackContext) -> None:
+    if update.message.from_user.username == developer_username:
+        try:
+            new_balance = int(context.args[0])
+            global account_balance
+            account_balance = new_balance
+            update.message.reply_text(f"تم تحديث رصيد الحساب إلى: {account_balance}")
+        except (IndexError, ValueError):
+            update.message.reply_text("يرجى إدخال رصيد صالح بعد الأمر.")
+    else:
+        update.message.reply_text("فقط المطور يمكنه تحديث رصيد الحساب.")
 
-    # إرسال الرسالة الترحيبية مع الأزرار الشفافة
-    bot.send_message(message.chat.id, welcome_message, reply_markup=markup)
+# تابع لمعالجة الضغط على الأزرار
+def button(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
 
-# معالجة الضغط على الأزرار
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query_handler(call):
-    if call.data == "balance_fill":
-        bot.answer_callback_query(call.id, "أنت الآن في صفحة تعبئة الرصيد.")
-    elif call.data == "phone_card":
-        bot.answer_callback_query(call.id, "لقد اخترت كارت الهاتف.")
-    elif call.data == "game_card":
-        bot.answer_callback_query(call.id, "لقد اخترت كارت شحن الألعاب.")
-    elif call.data == "app_card":
-        bot.answer_callback_query(call.id, "لقد اخترت كارت التطبيقات.")
+    if query.data == 'top_up':
+        query.edit_message_text(text="للتعبئة، استخدم الأمر التالي: /topup <المبلغ>")
+    elif query.data == 'mobile_card':
+        query.edit_message_text(text="تم اختيار كارت الهاتف.")
+    elif query.data == 'game_card':
+        query.edit_message_text(text="تم اختيار كارت شحن الألعاب.")
+    elif query.data == 'app_card':
+        query.edit_message_text(text="تم اختيار كارت التطبيقات.")
+    elif query.data == 'balance':
+        query.edit_message_text(text=f"رصيد حسابك الحالي هو: {account_balance}")
 
-# تشغيل البوت
-bot.polling(none_stop=True)
+def main():
+    # أدخل مفتاح API الخاص بالبوت هنا
+    updater = Updater("8131016207:AAHC6QQIHw48c-XHCRQAYMOKk5PUu3n3vws", use_context=True)
+
+    # إضافة معالج الأمر /start
+    updater.dispatcher.add_handler(CommandHandler("start", start))
+
+    # إضافة معالج الأوامر لتعبئة الرصيد
+    updater.dispatcher.add_handler(CommandHandler("topup", top_up))
+
+    # إضافة معالج الضغط على الأزرار
+    updater.dispatcher.add_handler(CallbackQueryHandler(button))
+
+    # بدء البوت
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
