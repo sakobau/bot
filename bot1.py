@@ -14,23 +14,24 @@ def start(message):
     # إعداد الرسالة الترحيبية
     welcome_message = "مرحبا بك في متجر ســـــــــــوبر تــــــكنو للخدمات الالكترونية\nللاستفسار مراسلة المطور @m_55mg"
 
-    # إعداد الأزرار الشفافة باستخدام InlineKeyboardMarkup
+    # إعداد الأزرار باستخدام InlineKeyboardMarkup
     markup = types.InlineKeyboardMarkup(row_width=2)
     
-    # الأزرار
+    # الأزرار القابلة للضغط
     button_1 = types.InlineKeyboardButton(text="تعبئة رصيد حسابي", callback_data='balance_fill')
     button_2 = types.InlineKeyboardButton(text="كارت هاتف", callback_data='phone_card')
     button_3 = types.InlineKeyboardButton(text="كارت شحن العاب", callback_data='game_card')
     button_4 = types.InlineKeyboardButton(text="كارت تطبيقات", callback_data='app_card')
 
+    # زر رصيد الحساب الذي لا يمكن الضغط عليه
+    account_balance_button = types.InlineKeyboardButton(text=f"رصيد حسابي: {account_balance}", callback_data=None)
+
     # إضافة الأزرار إلى الواجهة
-    markup.add(button_1, button_2, button_3, button_4)
+    markup.add(account_balance_button)  # زر الرصيد في الأعلى
+    markup.add(button_1, button_2, button_3, button_4)  # الأزرار الأخرى
 
     # إرسال الرسالة الترحيبية مع الأزرار الشفافة
     bot.send_message(message.chat.id, welcome_message, reply_markup=markup)
-
-    # إرسال رسالة رصيد الحساب
-    bot.send_message(message.chat.id, f"رصيد حسابي: {account_balance}", reply_markup=markup)
 
 # معالجة الضغط على الأزرار
 @bot.callback_query_handler(func=lambda call: True)
