@@ -1,124 +1,57 @@
-import telebot
-from telebot import types
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler
 
-# توكن البوت الذي حصلت عليه من BotFather
-API_TOKEN = '7889761662:AAETDbWkCIX_sDXEQWai9LYeMkdg7NAtUoE'
+# تعيين التوكن الخاص بالبوت
+TOKEN = '7889761662:AAETDbWkCIX_sDXEQWai9LYeMkdg7NAtUoE'
 
-# اسم المستخدم الخاص بالمطور
-DEVELOPER_USERNAME = 'm_55mg'
+# وظيفة معالجة أمر /start
+def start(update: Update, context: CallbackContext) -> None:
+    user_id = update.effective_user.id
+    # قيمة رصيد الحساب (ستكون متغيرة حسب البيانات المخزنة)
+    account_balance = 0  # يمكن تحديثها من قبل المطور
 
-# إنشاء كائن البوت
-bot = telebot.TeleBot(API_TOKEN)
-
-# متغير لتخزين الحالة الحالية للمستخدم
-user_states = {}
-
-# التعامل مع الرسائل التي تحتوي على أمر /start
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    welcome_text = (
-        "هذا البوت مبرمج من المطور مصطفى الاسدي و يوزره @m_55mg\n"
-        "يمكنه برمجة تطبيقات و بوتات، يرجى ارسال استفسارك "
-    )
+    # إعداد الكليشة والزر "رصيد حسابي"
+    welcome_message = "مرحبا بك في متجر ســـــــــــوبر تــــــكنو للخدمات الالكترونية\nللاستفسار مراسلة المطور @m_55mg"
+    button_1 = InlineKeyboardButton("تعبئة رصيد حسابي", callback_data='balance_fill')
+    button_2 = InlineKeyboardButton("كارت هاتف", callback_data='phone_card')
+    button_3 = InlineKeyboardButton("كارت شحن العاب", callback_data='game_card')
+    button_4 = InlineKeyboardButton("كارت تطبيقات", callback_data='app_card')
     
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button = types.KeyboardButton("هنا")
-    add_button = types.KeyboardButton("اضف زر +")
-    
-    markup.add(button, add_button)
+    keyboard = [[button_1, button_2], [button_3, button_4]]
+    markup = InlineKeyboardMarkup(keyboard)
 
-    bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
+    # إرسال الرسالة مع الأزرار
+    update.message.reply_text(welcome_message, reply_markup=markup)
 
-# التعامل مع الرسائل النصية
-@bot.message_handler(func=lambda message: message.text == "هنا")
-def send_link(message):
-    bot.send_message(message.chat.id, "رابط الاستفسارات: https://sakobau.github.io/inventory/")
+    # إرسال زر "رصيد حسابي" في الأعلى
+    update.message.reply_text(f"رصيد حسابي: {account_balance}", reply_markup=markup)
 
-# التعامل مع الضغط على زر "اضف زر +"
-@bot.message_handler(func=lambda message: message.text == "اضف زر +")
-def handle_add_button(message):
-    user_states[message.from_user.id] = 'waiting_for_button_name'
-    bot.send_message(message.chat.id, "الرجاء إدخال اسم الزر:")
+# معالجة الأزرار
+def button(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
 
-# التعامل مع الرسائل النصية
-@bot.message_handler(func=lambda message: message.from_user.id in user_states)
-def handle_text(message):
-    state = user_states[message.from_user.id]
+    if query.data == 'balance_fill':
+        # هنا يتم إضافة منطق تعبئة الرصيد من قبل المطور
+        query.edit_message_text(text="أنت الآن في صفحة تعبئة الرصيد.")
+    elif query.data == 'phone_card':
+        query.edit_message_text(text="لقد اخترت كارت الهاتف.")
+    elif query.data == 'game_card':
+        query.edit_message_text(text="لقد اخترت كارت شحن الألعاب.")
+    elif query.data == 'app_card':
+        query.edit_message_text(text="لقد اخترت كارت التطبيقات.")
 
-    if state == 'waiting_for_button_name':
-        if message.text.strip():  # تأكد من أن المدخل ليس فارغًا
-            user_states[message.from_user.id] = 'waiting_for_button_content'
-            user_states[message.from_user.id + "_button_name"] = message.text  # تخزين اسم الزر
-            bot.send_message(message.chat.id, "الرجاء إدخال محتوى الزر:")
-        else:
-            bot.send_message(message.chat.id, "الاسم المدخل غير صالح، يرجى إدخال اسم زر صالح.")
+# الدالة الرئيسية لتشغيل البوت
+def main():
+    updater = Updater(TOKEN)
 
-    elif state == 'waiting_for_button_content':
-        button_name = user_states.pop(message.from_user.id + "_button_name", None)
-        if button_name:  # تحقق من وجود اسم الزر
-            button_content = message.text  # الحصول على محتوى الزر
-            user_states[message.from_user.id] = 'waiting_for_option'
-            
-            # إرسال تأكيد مع محتوى الزر
-            bot.send_message(message.chat.id, f"تم إضافة زر '{button_name}' بمحتوى: '{button_content}'\nاختر من الخيارات التالية:")
-            
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            markup.add("صورة 🛡", "نـــــص 🖥")
-            markup.add("سلعة ✨", "رابط 📟")
-            markup.add("الرجوع")
+    # إضافة معالجي الأوامر
+    updater.dispatcher.add_handler(CommandHandler('start', start))
+    updater.dispatcher.add_handler(CallbackQueryHandler(button))
 
-            bot.send_message(message.chat.id, "اختر نوع الزر الذي تريد إضافته:", reply_markup=markup)
-        else:
-            bot.send_message(message.chat.id, "حدث خطأ، يرجى إعادة المحاولة.")
+    # بدء البوت
+    updater.start_polling()
+    updater.idle()
 
-# التعامل مع خيارات الأزرار
-@bot.message_handler(func=lambda message: message.text in ["صورة 🛡", "نـــــص 🖥", "سلعة ✨", "رابط 📟", "الرجوع"])
-def handle_options(message):
-    if message.text == "الرجوع":
-        send_welcome(message)  # العودة للقائمة الرئيسية
-        return
-    
-    # حسب الزر المحدد، اطلب من المستخدم إدخال البيانات المناسبة
-    if message.text == "صورة 🛡":
-        user_states[message.from_user.id] = 'waiting_for_image'
-        bot.send_message(message.chat.id, "يرجى إرسال الصورة المطلوبة.")
-    
-    elif message.text == "نـــــص 🖥":
-        user_states[message.from_user.id] = 'waiting_for_text'
-        bot.send_message(message.chat.id, "يرجى إدخال النص المطلوب.")
-    
-    elif message.text == "سلعة ✨":
-        user_states[message.from_user.id] = 'waiting_for_product'
-        bot.send_message(message.chat.id, "يرجى إدخال سعر السلعة ووصفها.")
-    
-    elif message.text == "رابط 📟":
-        user_states[message.from_user.id] = 'waiting_for_link'
-        bot.send_message(message.chat.id, "يرجى إدخال وصف الرابط والرابط المطلوب.")
-
-# التعامل مع الرسائل حسب حالة المستخدم
-@bot.message_handler(func=lambda message: message.from_user.id in user_states)
-def handle_dynamic_inputs(message):
-    state = user_states[message.from_user.id]
-
-    if state == 'waiting_for_image':
-        # هنا يمكنك معالجة الصورة المرسلة
-        bot.send_message(message.chat.id, "تم استلام الصورة.")
-        user_states.pop(message.from_user.id)  # إزالة الحالة
-    
-    elif state == 'waiting_for_text':
-        bot.send_message(message.chat.id, f"تم استلام النص: {message.text}")
-        user_states.pop(message.from_user.id)  # إزالة الحالة
-    
-    elif state == 'waiting_for_product':
-        bot.send_message(message.chat.id, f"تم استلام المنتج: {message.text}")
-        user_states.pop(message.from_user.id)  # إزالة الحالة
-
-    elif state == 'waiting_for_link':
-        bot.send_message(message.chat.id, f"تم استلام الرابط: {message.text}")
-        user_states.pop(message.from_user.id)  # إزالة الحالة
-
-# تشغيل البوت في وضع الاستماع
-try:
-    bot.polling(none_stop=True)
-except Exception as e:
-    print(f"Error: {e}")
+if __name__ == '__main__':
+    main()
