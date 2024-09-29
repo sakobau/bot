@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام تعداد سكاني مع PDF و Excel</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      max-width: 500px;
+      margin: 20px auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"], input[type="number"], input[type="submit"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    button {
+      padding: 5px 10px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<h1>نظام تعداد سكاني - محافظة بابل، المسيب</h1>
+
+<!-- نموذج إضافة شخص جديد -->
+<form id="personForm">
+  <h2>إضافة شخص جديد</h2>
+  <input type="text" id="name" placeholder="الاسم الكامل" required>
+  <input type="number" id="age" placeholder="العمر" required>
+  <input type="text" id="gender" placeholder="الجنس" required>
+  <input type="text" id="address" placeholder="العنوان" required>
+  <input type="submit" value="إضافة شخص">
+</form>
+
+<!-- جدول عرض الأشخاص المسجلين -->
+<table id="peopleTable">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>الاسم الكامل</th>
+      <th>العمر</th>
+      <th>الجنس</th>
+      <th>العنوان</th>
+      <th>العمليات</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- سيتم ملء هذا الجدول بالبيانات من JavaScript -->
+  </tbody>
+</table>
+
+<script>
+  let people = [];  // مصفوفة لتخزين بيانات الأشخاص
+  let currentId = 1;  // معرف الشخص الحالي
+
+  const form = document.getElementById('personForm');
+  const peopleTable = document.getElementById('peopleTable').querySelector('tbody');
+
+  // إرسال بيانات الشخص الجديد وإضافتها إلى المصفوفة
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const name = document.getElementById('name').value;
+    const age = document.getElementById('age').value;
+    const gender = document.getElementById('gender').value;
+    const address = document.getElementById('address').value;
+
+    // إضافة الشخص إلى المصفوفة
+    const person = { id: currentId++, name, age, gender, address };
+    people.push(person);
+
+    // تحديث الجدول لعرض الأشخاص الجدد
+    updateTable();
+
+    // إنشاء ملف PDF
+    generatePDF(person);
+
+    // إعادة تعيين النموذج
+    form.reset();
+  });
+
+  // تحديث الجدول لعرض الأشخاص المخزنين في المصفوفة
+  function updateTable() {
+    peopleTable.innerHTML = '';  // مسح البيانات القديمة من الجدول
+
+    // ملء الجدول بالبيانات الجديدة
+    people.forEach(person => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${person.id}</td>
+        <td>${person.name}</td>
+        <td>${person.age}</td>
+        <td>${person.gender}</td>
+        <td>${person.address}</td>
+        <td><button onclick="deletePerson(${person.id})">حذف</button></td>
+      `;
+      peopleTable.appendChild(row);
+    });
+  }
+
+  // حذف الشخص بناءً على ID
+  function deletePerson(id) {
+    // العثور على الشخص في المصفوفة وحذفه
+    people = people.filter(person => person.id !== id);
+    
+    // تحديث الجدول بعد الحذف
+    updateTable();
+  }
+
+  // توليد ملف PDF عند إضافة شخص
+  function generatePDF(person) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text('قائمة التعداد السكاني لمحافظة بابل، المسيب', 10, 20);
+    doc.setFontSize(12);
+    
+    // إضافة بيانات الشخص إلى ملف PDF
+    doc.text(`التسلسل: ${person.id}`, 10, 40);
+    doc.text(`الاسم الكامل: ${person.name}`, 10, 50);
+    doc.text(`العمر: ${person.age}`, 10, 60);
+    doc.text(`الجنس: ${person.gender}`, 10, 70);
+    doc.text(`العنوان: ${person.address}`, 10, 80);
+
+    // تحميل PDF
+    doc.save(`person_${person.id}.pdf`);
+  }
+
+  // وظيفة لتحويل بيانات الأشخاص إلى ملف Excel
+  function generateExcel() {
+    const ws = XLSX.utils.json_to_sheet(people.map((person) => ({
+      التسلسل: person.id,
+      "الاسم الكامل": person.name,
+      العمر: person.age,
+      الجنس: person.gender,
+      العنوان: person.address
+    })));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "تعداد سكاني");
+
+    // تحميل ملف Excel
+    XLSX.writeFile(wb, "Population_Census_Babel_Al-Musayyib.xlsx");
+  }
+</script>
+
+</body>
+</html>
