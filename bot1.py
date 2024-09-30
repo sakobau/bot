@@ -19,6 +19,15 @@ def welcome(message):
         reply_markup=markup
     )
 
+# دالة لتفعيل البوت
+@bot.message_handler(func=lambda message: message.text.lower() == 'تفعيل')
+def activate_bot(message):
+    # تأكد أن المستخدم لديه صلاحيات الإدارة في المجموعة
+    if message.from_user.id in [admin.user.id for admin in bot.get_chat_administrators(message.chat.id)]:
+        bot.send_message(message.chat.id, "تم تفعيل البوت بنجاح في المجموعة!")
+    else:
+        bot.send_message(message.chat.id, "عذراً، تحتاج إلى صلاحيات الإدارة لتفعيل البوت.")
+
 # دالة لإجراء استطلاع
 @bot.message_handler(commands=['استطلاع'])
 def poll(message):
@@ -36,7 +45,7 @@ def process_poll_response(message):
 # دالة لإرسال معلومات
 @bot.message_handler(commands=['معلومات'])
 def info(message):
-    bot.send_message(message.chat.id, "هذا بوت بسيط يوفر لك بعض الميزات الأساسية. استخدم الأوامر التالية:\n/start - للترحيب\n/استطلاع - لإجراء استطلاع\n/معلومات - لمعرفة المزيد عن البوت")
+    bot.send_message(message.chat.id, "هذا بوت بسيط يوفر لك بعض الميزات الأساسية. استخدم الأوامر التالية:\n/start - للترحيب\n/استطلاع - لإجراء استطلاع\nاكتب 'تفعيل' لتفعيل البوت\n/معلومات - لمعرفة المزيد عن البوت")
 
 # دالة لإدارة القناة
 @bot.message_handler(commands=['إدارة'])
