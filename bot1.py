@@ -8,12 +8,15 @@ bot = telebot.TeleBot(TOKEN)
 # دالة للترحيب بالمستخدمين الجدد
 @bot.message_handler(commands=['start'])
 def welcome(message):
+    # إنشاء زر شفاف
+    markup = types.InlineKeyboardMarkup()
+    add_button = types.InlineKeyboardButton("اضفني للمجموعة 🔥🖥", url="https://t.me/D7Bot?startgroup=Commands&admin=ban_users+restrict_members+delete_messages+add_admins+change_info+invite_users+pin_messages+manage_call+manage_chat+manage_video_chats+promote_members")
+    markup.add(add_button)
+    
     bot.send_message(
         message.chat.id,
-        "أهلاً بك في بوت وعد! كيف يمكنني مساعدتك اليوم؟\n\n"
-        "اضفني للمجموعة من خلال الرابط أدناه 🔥🖥:\n"
-        "[اضفني للمجموعة](https://t.me/D7Bot?startgroup=Commands&admin=ban_users+restrict_members+delete_messages+add_admins+change_info+invite_users+pin_messages+manage_call+manage_chat+manage_video_chats+promote_members)",
-        parse_mode='Markdown'  # استخدم تنسيق Markdown لجعل الرابط clickable
+        "أهلاً بك في بوت وعد! كيف يمكنني مساعدتك اليوم؟",
+        reply_markup=markup
     )
 
 # دالة لإجراء استطلاع
