@@ -8,18 +8,13 @@ bot = telebot.TeleBot(TOKEN)
 # دالة للترحيب بالمستخدمين الجدد
 @bot.message_handler(commands=['start'])
 def welcome(message):
-    # إنشاء لوحة مفاتيح مخصصة
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    add_button = types.KeyboardButton("اضفني للمجموعة 🔥🖥")
-    markup.add(add_button)
-    
-    bot.send_message(message.chat.id, "أهلاً بك في بوت وعد! كيف يمكنني مساعدتك اليوم؟", reply_markup=markup)
-
-# دالة للتعامل مع الزر
-@bot.message_handler(func=lambda message: message.text == "اضفني للمجموعة 🔥🖥")
-def add_to_group(message):
-    link = "https://t.me/D7Bot?startgroup=Commands&admin=ban_users+restrict_members+delete_messages+add_admins+change_info+invite_users+pin_messages+manage_call+manage_chat+manage_video_chats+promote_members"
-    bot.send_message(message.chat.id, f"يمكنك إضافتي إلى المجموعة من خلال هذا الرابط: {link}")
+    bot.send_message(
+        message.chat.id,
+        "أهلاً بك في بوت وعد! كيف يمكنني مساعدتك اليوم؟\n\n"
+        "اضفني للمجموعة من خلال الرابط أدناه 🔥🖥:\n"
+        "[اضفني للمجموعة](https://t.me/D7Bot?startgroup=Commands&admin=ban_users+restrict_members+delete_messages+add_admins+change_info+invite_users+pin_messages+manage_call+manage_chat+manage_video_chats+promote_members)",
+        parse_mode='Markdown'  # استخدم تنسيق Markdown لجعل الرابط clickable
+    )
 
 # دالة لإجراء استطلاع
 @bot.message_handler(commands=['استطلاع'])
