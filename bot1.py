@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 # حط توكن البوت مالك هنا
-TOKEN = 'YOUR_BOT_TOKEN'
+TOKEN = '8090786845:AAFwLA0VEVphRorM31fyY44iMyXXK1EO9c0'
 bot = telebot.TeleBot(TOKEN)
 
 # دالة للترحيب بالمستخدمين الجدد
