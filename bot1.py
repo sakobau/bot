@@ -1,48 +1,38 @@
 import telebot
-import os
-import yt_dlp
+from telebot import types
 
 # حط توكن البوت مالك هنا
-TOKEN = '8090786845:AAFwLA0VEVphRorM31fyY44iMyXXK1EO9c0'
+TOKEN = 'YOUR_BOT_TOKEN'
 bot = telebot.TeleBot(TOKEN)
 
-# دالة لتحميل الأغنية من يوتيوب
-def download_song(url):
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'outtmpl': 'songs/%(title)s.%(ext)s',
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+# دالة للترحيب بالمستخدمين الجدد
+@bot.message_handler(commands=['start'])
+def welcome(message):
+    bot.send_message(message.chat.id, "أهلاً بك في بوت وعد! كيف يمكنني مساعدتك اليوم؟")
 
-# دالة لإرسال الموسيقى
-@bot.message_handler(commands=['صوف'])
-def send_song(message):
-    # خذ الرابط من الرسالة
-    url = message.text.split(maxsplit=1)
+# دالة لإجراء استطلاع
+@bot.message_handler(commands=['استطلاع'])
+def poll(message):
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.add('نعم', 'لا')
+    msg = bot.send_message(message.chat.id, "هل تحب البوت؟", reply_markup=markup)
+    bot.register_next_step_handler(msg, process_poll_response)
 
-    if len(url) > 1:
-        url = url[1]  # استخدم الرابط
-        try:
-            download_song(url)  # حاول تحميل الأغنية
-            song_file = os.listdir('songs')[-1]  # خذ آخر ملف تم تحميله
-            
-            with open(f'songs/{song_file}', 'rb') as song:
-                bot.send_audio(chat_id=message.chat.id, audio=song)
-        except Exception as e:
-            bot.send_message(chat_id=message.chat.id, text='عذراً، حصلت مشكلة في تحميل الأغنية.')
-            print(e)
+def process_poll_response(message):
+    if message.text == 'نعم':
+        bot.send_message(message.chat.id, "شكرًا لك!")
     else:
-        bot.send_message(chat_id=message.chat.id, text='رجاءً اكتب رابط الأغنية بعد الأمر "صوف".')
+        bot.send_message(message.chat.id, "نأسف لأنك لا تحب البوت!")
 
-# إنشاء مجلد لتخزين الأغاني إذا ما موجود
-if not os.path.exists('songs'):
-    os.makedirs('songs')
+# دالة لإرسال معلومات
+@bot.message_handler(commands=['معلومات'])
+def info(message):
+    bot.send_message(message.chat.id, "هذا بوت بسيط يوفر لك بعض الميزات الأساسية. استخدم الأوامر التالية:\n/start - للترحيب\n/استطلاع - لإجراء استطلاع\n/معلومات - لمعرفة المزيد عن البوت")
+
+# دالة لإدارة القناة
+@bot.message_handler(commands=['إدارة'])
+def manage_channel(message):
+    bot.send_message(message.chat.id, "هذه ميزة إدارة القناة! يمكنك إضافة المزيد من الميزات هنا.")
 
 # بدء تشغيل البوت
 bot.polling()
