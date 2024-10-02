@@ -1,56 +1,66 @@
 import telebot
-from telebot import types
+import json
+import os
 
-# حط توكن البوت مالك هنا
-TOKEN = '8090786845:AAFwLA0VEVphRorM31fyY44iMyXXK1EO9c0'
-bot = telebot.TeleBot(TOKEN)
+# توكن البوت
+bot = telebot.TeleBot('7500408322:AAHy2I93ZciXOyZ4EpU9jk1HpmJgGtBa2dQ')
 
-# دالة للترحيب بالمستخدمين الجدد
-@bot.message_handler(commands=['start'])
-def welcome(message):
-    # إنشاء زر شفاف
-    markup = types.InlineKeyboardMarkup()
-    add_button = types.InlineKeyboardButton("اضفني للمجموعة 🔥🖥", url="https://t.me/mmssttffg_bot?startgroup=Commands&admin=ban_users+restrict_members+delete_messages+add_admins+change_info+invite_users+pin_messages+manage_call+manage_chat+manage_video_chats+promote_members")
-    markup.add(add_button)
+# ملف قاعدة البيانات
+users_file = 'users_db.json'
+
+# تحميل قاعدة البيانات إذا كانت موجودة
+if os.path.exists(users_file):
+    with open(users_file, 'r') as f:
+        users_db = json.load(f)
+else:
+    users_db = {}
+
+# أمر التسجيل
+@bot.message_handler(commands=['register'])
+def register_user(message):
+    try:
+        username = message.from_user.username
+        user_id = message.from_user.id
+        
+        # تخزين المستخدم في قاعدة البيانات
+        users_db[username] = user_id
+        
+        # حفظ البيانات في الملف
+        with open(users_file, 'w') as f:
+            json.dump(users_db, f)
+        
+        bot.send_message(user_id, f"تم تسجيلك بنجاح، معرفك هو: {user_id}")
     
-    bot.send_message(
-        message.chat.id,
-        "أهلاً بك في بوت وعد! كيف يمكنني مساعدتك اليوم؟",
-        reply_markup=markup
-    )
+    except Exception as e:
+        bot.send_message(message.chat.id, f"حدث خطأ أثناء التسجيل: {e}")
 
-# دالة لتفعيل البوت
-@bot.message_handler(func=lambda message: message.text.lower() == 'تفعيل')
-def activate_bot(message):
-    # تأكد أن المستخدم لديه صلاحيات الإدارة في المجموعة
-    if message.from_user.id in [admin.user.id for admin in bot.get_chat_administrators(message.chat.id)]:
-        bot.send_message(message.chat.id, "تم تفعيل البوت بنجاح في المجموعة!")
-    else:
-        bot.send_message(message.chat.id, "عذراً، تحتاج إلى صلاحيات الإدارة لتفعيل البوت.")
+# استلام البيانات من Google Forms
+@bot.message_handler(commands=['send_form_data'])
+def handle_message(message):
+    try:
+        # استلام الرسالة على شكل JSON
+        data = json.loads(message.text)
+        
+        # استخراج اسم المستخدم والبيانات
+        username = data['username']
+        form_data = data['formData']
+        
+        # البحث عن المستخدم المطلوب بناءً على الاسم
+        user_id = users_db.get(username)
+        
+        if user_id:
+            # إرسال البيانات إلى المستخدم المناسب
+            bot.send_message(user_id, f"تم استلام البيانات:\n{form_data}")
+        else:
+            bot.send_message(message.chat.id, "لم يتم العثور على المستخدم. يجب أن يسجل المستخدم عبر البوت.")
+    
+    except Exception as e:
+        bot.send_message(message.chat.id, f"حدث خطأ: {e}")
 
-# دالة لإجراء استطلاع
-@bot.message_handler(commands=['استطلاع'])
-def poll(message):
-    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    markup.add('نعم', 'لا')
-    msg = bot.send_message(message.chat.id, "هل تحب البوت؟", reply_markup=markup)
-    bot.register_next_step_handler(msg, process_poll_response)
+# استلام الرسائل من المجموعة
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, f"معرف المجموعة هو: {message.chat.id}")
 
-def process_poll_response(message):
-    if message.text == 'نعم':
-        bot.send_message(message.chat.id, "شكرًا لك!")
-    else:
-        bot.send_message(message.chat.id, "نأسف لأنك لا تحب البوت!")
-
-# دالة لإرسال معلومات
-@bot.message_handler(commands=['معلومات'])
-def info(message):
-    bot.send_message(message.chat.id, "هذا بوت بسيط يوفر لك بعض الميزات الأساسية. استخدم الأوامر التالية:\n/start - للترحيب\n/استطلاع - لإجراء استطلاع\nاكتب 'تفعيل' لتفعيل البوت\n/معلومات - لمعرفة المزيد عن البوت")
-
-# دالة لإدارة القناة
-@bot.message_handler(commands=['إدارة'])
-def manage_channel(message):
-    bot.send_message(message.chat.id, "هذه ميزة إدارة القناة! يمكنك إضافة المزيد من الميزات هنا.")
-
-# بدء تشغيل البوت
+# بدء البوت
 bot.polling()
