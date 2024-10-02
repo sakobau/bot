@@ -1,6 +1,6 @@
-import telebot
-import json
-import os
+import telebot       # مكتبة لتعامل مع Telegram Bot API
+import json          # مكتبة للتعامل مع بيانات JSON
+import os            # مكتبة للتعامل مع نظام الملفات
 
 # توكن البوت
 bot = telebot.TeleBot('7500408322:AAHy2I93ZciXOyZ4EpU9jk1HpmJgGtBa2dQ')
@@ -51,6 +51,10 @@ def handle_message(message):
         if user_id:
             # إرسال البيانات إلى المستخدم المناسب
             bot.send_message(user_id, f"تم استلام البيانات:\n{form_data}")
+            
+            # إرسال نفس البيانات إلى المجموعة
+            group_chat_id = '6649576561'  # معرف المجموعة
+            bot.send_message(group_chat_id, f"تم استلام البيانات من {username}:\n{form_data}")
         else:
             bot.send_message(message.chat.id, "لم يتم العثور على المستخدم. يجب أن يسجل المستخدم عبر البوت.")
     
