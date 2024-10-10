@@ -4,4 +4,10 @@ requests
 pyTelegramBotAPI
 yt-dlp
 json
-os   
+os 
+pyTelegramBotAPI
+gspread
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
