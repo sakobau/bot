@@ -1,49 +1,46 @@
-import os
 import telebot
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# توكن البوت
+# توكن البوت الخاص بك
 TOKEN = '7918486703:AAFlQxZtkKxENYRZ8T96ZZ1BW7Jo2ez88Yw'
+OWNER_USERNAME = 'm_55mg'  # اسم المالك
+
 bot = telebot.TeleBot(TOKEN)
 
-# إعداد بيانات الاعتماد من ملف JSON
-SERVICE_ACCOUNT_FILE = 'path_to_your_json_file.json'
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+# متغير الرصيد
+balance = 0
 
-# إعداد الاتصال بـ Google Sheets
-credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# دالة لعرض زر "الرصيد"
+def get_balance_markup():
+    markup = InlineKeyboardMarkup()
+    # الزر الخاص بالرصيد لا يمكن الضغط عليه
+    balance_button = InlineKeyboardButton(f"الرصيد: {balance}", callback_data="balance", callback_game=False)
+    markup.add(balance_button)
+    return markup
 
-# ID الجدول الخاص بك من Google Sheets
-SPREADSHEET_ID = 'Google Sheet ID الخاص بك'
-
-service = build('sheets', 'v4', credentials=credentials)
-
-# الدالة التي تضيف بيانات إلى Google Sheet
-def add_data_to_sheet(data):
-    sheet = service.spreadsheets()
-    body = {
-        'values': [data]
-    }
-    result = sheet.values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range="Sheet1!A1",  # تعديل النطاق حسب احتياجاتك
-        valueInputOption="RAW",
-        body=body
-    ).execute()
-    return result
-
-# الدالة التي تتعامل مع رسائل المستخدمين
+# أمر البدء لعرض زر الرصيد
 @bot.message_handler(commands=['start'])
-def start_message(message):
-    bot.send_message(message.chat.id, "أهلاً! أرسل لي البيانات التي تريد إضافتها إلى Google Forms.")
+def send_welcome(message):
+    markup = get_balance_markup()
+    bot.send_message(message.chat.id, "مرحباً بك! هذه هي معلومات رصيدك:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    user_data = [message.chat.username, message.text]
-    add_data_to_sheet(user_data)
-    bot.send_message(message.chat.id, "تم حفظ البيانات بنجاح!")
+# أمر المالك لشحن الرصيد
+@bot.message_handler(commands=['charge'])
+def charge_balance(message):
+    global balance
+    if message.from_user.username == OWNER_USERNAME:
+        try:
+            # شحن الرصيد الجديد بناءً على ما يدخله المالك
+            new_balance = int(message.text.split()[1])  # يأخذ القيمة المدخلة بعد "/charge"
+            balance = new_balance
+            bot.send_message(message.chat.id, f"تم تحديث الرصيد إلى: {balance}")
+        except (IndexError, ValueError):
+            bot.send_message(message.chat.id, "يرجى إدخال قيمة صحيحة بعد الأمر /charge")
 
-# تشغيل البوت
+        # تحديث الزر لكل المحادثات المفتوحة
+        markup = get_balance_markup()
+        bot.send_message(message.chat.id, "تم تحديث الرصيد", reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id, "ليس لديك صلاحية لتحديث الرصيد.")
+
 bot.polling()
