@@ -1,70 +1,49 @@
-import telebot       # مكتبة لتعامل مع Telegram Bot API
-import json          # مكتبة للتعامل مع بيانات JSON
-import os            # مكتبة للتعامل مع نظام الملفات
+import os
+import telebot
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 # توكن البوت
-bot = telebot.TeleBot('7500408322:AAHy2I93ZciXOyZ4EpU9jk1HpmJgGtBa2dQ')
+TOKEN = '7918486703:AAFlQxZtkKxENYRZ8T96ZZ1BW7Jo2ez88Yw'
+bot = telebot.TeleBot(TOKEN)
 
-# ملف قاعدة البيانات
-users_file = 'users_db.json'
+# إعداد بيانات الاعتماد من ملف JSON
+SERVICE_ACCOUNT_FILE = 'path_to_your_json_file.json'
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-# تحميل قاعدة البيانات إذا كانت موجودة
-if os.path.exists(users_file):
-    with open(users_file, 'r') as f:
-        users_db = json.load(f)
-else:
-    users_db = {}
+# إعداد الاتصال بـ Google Sheets
+credentials = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-# أمر التسجيل
-@bot.message_handler(commands=['register'])
-def register_user(message):
-    try:
-        username = message.from_user.username
-        user_id = message.from_user.id
-        
-        # تخزين المستخدم في قاعدة البيانات
-        users_db[username] = user_id
-        
-        # حفظ البيانات في الملف
-        with open(users_file, 'w') as f:
-            json.dump(users_db, f)
-        
-        bot.send_message(user_id, f"تم تسجيلك بنجاح، معرفك هو: {user_id}")
-    
-    except Exception as e:
-        bot.send_message(message.chat.id, f"حدث خطأ أثناء التسجيل: {e}")
+# ID الجدول الخاص بك من Google Sheets
+SPREADSHEET_ID = 'Google Sheet ID الخاص بك'
 
-# استلام البيانات من Google Forms
-@bot.message_handler(commands=['send_form_data'])
-def handle_message(message):
-    try:
-        # استلام الرسالة على شكل JSON
-        data = json.loads(message.text)
-        
-        # استخراج اسم المستخدم والبيانات
-        username = data['username']
-        form_data = data['formData']
-        
-        # البحث عن المستخدم المطلوب بناءً على الاسم
-        user_id = users_db.get(username)
-        
-        if user_id:
-            # إرسال البيانات إلى المستخدم المناسب
-            bot.send_message(user_id, f"تم استلام البيانات:\n{form_data}")
-            
-            # إرسال نفس البيانات إلى المجموعة
-            group_chat_id = '6649576561'  # معرف المجموعة
-            bot.send_message(group_chat_id, f"تم استلام البيانات من {username}:\n{form_data}")
-        else:
-            bot.send_message(message.chat.id, "لم يتم العثور على المستخدم. يجب أن يسجل المستخدم عبر البوت.")
-    
-    except Exception as e:
-        bot.send_message(message.chat.id, f"حدث خطأ: {e}")
+service = build('sheets', 'v4', credentials=credentials)
 
-# استلام الرسائل من المجموعة
+# الدالة التي تضيف بيانات إلى Google Sheet
+def add_data_to_sheet(data):
+    sheet = service.spreadsheets()
+    body = {
+        'values': [data]
+    }
+    result = sheet.values().append(
+        spreadsheetId=SPREADSHEET_ID,
+        range="Sheet1!A1",  # تعديل النطاق حسب احتياجاتك
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+    return result
+
+# الدالة التي تتعامل مع رسائل المستخدمين
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    bot.send_message(message.chat.id, "أهلاً! أرسل لي البيانات التي تريد إضافتها إلى Google Forms.")
+
 @bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.reply_to(message, f"معرف المجموعة هو: {message.chat.id}")
+def handle_message(message):
+    user_data = [message.chat.username, message.text]
+    add_data_to_sheet(user_data)
+    bot.send_message(message.chat.id, "تم حفظ البيانات بنجاح!")
 
-# بدء البوت
+# تشغيل البوت
 bot.polling()
